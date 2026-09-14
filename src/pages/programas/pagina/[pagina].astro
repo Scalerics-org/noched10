@@ -1,0 +1,18 @@
+---
+/** Páginas 2 en adelante del archivo sin filtrar. */
+import type { GetStaticPaths } from 'astro';
+import ListadoDelArchivo from '../../../componentes/ListadoDelArchivo.astro';
+import { vistasDelArchivo } from '../../../datos/archivo';
+
+export const getStaticPaths = (() =>
+  vistasDelArchivo()
+    .filter((vista) => !vista.filtro.anio && !vista.filtro.tema && vista.pagina > 1)
+    .map((vista) => ({
+      params: { pagina: String(vista.pagina) },
+      props: { pagina: vista.pagina },
+    }))) satisfies GetStaticPaths;
+
+const { pagina } = Astro.props;
+---
+
+<ListadoDelArchivo filtro={{}} pagina={pagina} />

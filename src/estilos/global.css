@@ -185,3 +185,17 @@
     navigation: none;
   }
 }
+
+/*
+  Las dos vistas del archivo. Viven en CSS y no en JavaScript: el toggle sólo
+  cambia [data-vista] en el contenedor y el navegador hace el resto. Así el
+  maquetado por defecto lo pinta el servidor y, sin JS, el archivo se ve igual.
+*/
+[data-lista-de-emisiones] {
+  display: grid;
+  gap: 1rem;
+}
+
+[data-lista-de-emisiones][data-vista='grilla'] {
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+}

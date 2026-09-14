@@ -1,0 +1,102 @@
+---
+/**
+ * Paginación real, con URLs propias e indexables.
+ *
+ * Nada de scroll infinito: con 3.000 capítulos mataría el pie de página —que
+ * es donde está el contacto de pauta— y rompería el deep-linking y el SEO.
+ */
+type Props = {
+  pagina: number;
+  totalPaginas: number;
+  urlAnterior: string | null;
+  urlSiguiente: string | null;
+  /** Para armar los links numerados. */
+  urlDePagina: (pagina: number) => string;
+};
+
+const { pagina, totalPaginas, urlAnterior, urlSiguiente, urlDePagina } = Astro.props;
+
+/**
+ * Ventana de páginas alrededor de la actual. Con 250 páginas de archivo,
+ * listarlas todas sería una lista de links inservible.
+ */
+const desde = Math.max(1, Math.min(pagina - 2, totalPaginas - 4));
+const hasta = Math.min(totalPaginas, Math.max(pagina + 2, 5));
+const numeros = Array.from({ length: hasta - desde + 1 }, (_, i) => desde + i);
+---
+
+{
+  totalPaginas > 1 && (
+    <nav
+      class="mt-10 flex flex-wrap items-center justify-center gap-2"
+      aria-label="Paginación"
+    >
+      <a
+        href={urlAnterior ?? undefined}
+        rel="prev"
+        aria-disabled={urlAnterior ? undefined : 'true'}
+        class:list={[
+          'border-borde border px-4 py-2 text-sm transition-colors',
+          urlAnterior
+            ? 'hover:border-acento hover:text-acento'
+            : 'text-texto-suave pointer-events-none opacity-40',
+        ]}
+      >
+        Anterior
+      </a>
+
+      <ol class="flex flex-wrap gap-1">
+        {desde > 1 && (
+          <li>
+            <a
+              href={urlDePagina(1)}
+              class="border-borde hover:border-acento block border px-3 py-2 text-sm"
+            >
+              1
+            </a>
+          </li>
+        )}
+        {numeros.map((numero) => (
+          <li>
+            <a
+              href={urlDePagina(numero)}
+              aria-current={numero === pagina ? 'page' : undefined}
+              class:list={[
+                'block border px-3 py-2 text-sm transition-colors',
+                numero === pagina
+                  ? 'border-acento bg-acento-fuerte text-sobre-acento font-semibold'
+                  : 'border-borde hover:border-acento',
+              ]}
+            >
+              {numero}
+            </a>
+          </li>
+        ))}
+        {hasta < totalPaginas && (
+          <li>
+            <a
+              href={urlDePagina(totalPaginas)}
+              class="border-borde hover:border-acento block border px-3 py-2 text-sm"
+            >
+              {totalPaginas}
+            </a>
+          </li>
+        )}
+      </ol>
+
+      <a
+        href={urlSiguiente ?? undefined}
+        rel="next"
+        aria-disabled={urlSiguiente ? undefined : 'true'}
+        class:list={[
+          'border-borde border px-4 py-2 text-sm transition-colors',
+          urlSiguiente
+            ? 'hover:border-acento hover:text-acento'
+            : 'text-texto-suave pointer-events-none opacity-40',
+        ]}
+      >
+        Siguiente
+      </a>
+    </nav>
+  )
+}

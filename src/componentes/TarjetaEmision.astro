@@ -1,0 +1,44 @@
+---
+/**
+ * Emisión en el archivo.
+ *
+ * La misma tarjeta sirve en grilla y en lista: el que cambia es el contenedor,
+ * con CSS. Si la tarjeta tuviera dos maquetados distintos, el toggle tendría
+ * que re-renderizar HTML en el cliente y ahí empieza a hacer falta JavaScript
+ * para algo que es una preferencia visual.
+ */
+import { urlDeEmision } from '../datos/archivo';
+import { formatearFecha } from '../datos/texto';
+
+type Props = {
+  fecha: string;
+  titulo: string;
+  duracion: string;
+  invitados: string[];
+  cantidadDePiezas: number;
+};
+
+const { fecha, titulo, duracion, invitados, cantidadDePiezas } = Astro.props;
+---
+
+<article
+  class="group border-borde bg-superficie hover:border-acento relative flex h-full flex-col border p-5 transition-colors"
+>
+  <p class="text-texto-suave text-xs tracking-widest uppercase">
+    <time datetime={fecha}>{formatearFecha(fecha)}</time>
+    <span aria-hidden="true"> · </span>{duracion}
+  </p>
+
+  <h2 class="mt-2 leading-snug font-semibold">
+    <a
+      href={urlDeEmision({ fecha })}
+      class="group-hover:text-acento transition-colors after:absolute after:inset-0"
+    >
+      {titulo}
+    </a>
+  </h2>
+
+  <p class="text-texto-suave mt-auto pt-3 text-sm">
+    {cantidadDePiezas} piezas · {invitados.join(', ')}
+  </p>
+</article>

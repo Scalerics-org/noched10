@@ -1,0 +1,83 @@
+---
+/**
+ * Toggle grilla ↔ lista.
+ *
+ * Es preferencia visual pura, así que vive del lado del cliente y se recuerda
+ * en localStorage. El estado por defecto lo pinta el servidor, de modo que sin
+ * JS el archivo se ve igual y sigue siendo usable: lo único que se pierde es
+ * poder cambiarlo.
+ */
+---
+
+<div class="flex items-center gap-2" data-pagefind-ignore>
+  <span class="text-texto-suave text-xs tracking-widest uppercase">Vista</span>
+  <div
+    class="border-borde flex border"
+    role="group"
+    aria-label="Forma de ver el archivo"
+  >
+    <button
+      type="button"
+      data-vista="lista"
+      aria-pressed="true"
+      class="text-texto-suave aria-pressed:bg-acento-fuerte aria-pressed:text-sobre-acento px-3 py-1.5 text-sm"
+    >
+      Lista
+    </button>
+    <button
+      type="button"
+      data-vista="grilla"
+      aria-pressed="false"
+      class="text-texto-suave aria-pressed:bg-acento-fuerte aria-pressed:text-sobre-acento border-borde border-l px-3 py-1.5 text-sm"
+    >
+      Grilla
+    </button>
+  </div>
+</div>
+
+<script>
+  const CLAVE = 'noched10:vista-archivo';
+
+  function leer(): string | null {
+    try {
+      return localStorage.getItem(CLAVE);
+    } catch {
+      /* Navegación privada o cookies bloqueadas: se sigue con el default. */
+      return null;
+    }
+  }
+
+  function guardar(vista: string) {
+    try {
+      localStorage.setItem(CLAVE, vista);
+    } catch {
+      /* Si no se puede guardar, la preferencia dura lo que dura la página. */
+    }
+  }
+
+  /**
+   * El maquetado de las dos vistas está en CSS, colgado de [data-vista]. Acá
+   * sólo se cambia el atributo: nada de manotear listas de clases desde JS.
+   */
+  function aplicar(vista: string) {
+    const lista = document.querySelector<HTMLElement>('[data-lista-de-emisiones]');
+    if (!lista) return;
+
+    lista.dataset.vista = vista;
+    document.querySelectorAll<HTMLButtonElement>('[data-vista]').forEach((boton) => {
+      boton.setAttribute('aria-pressed', String(boton.dataset.vista === vista));
+    });
+  }
+
+  const guardada = leer();
+  if (guardada === 'grilla' || guardada === 'lista') aplicar(guardada);
+
+  document.querySelectorAll<HTMLButtonElement>('[data-vista]').forEach((boton) => {
+    boton.addEventListener('click', () => {
+      const vista = boton.dataset.vista;
+      if (!vista) return;
+      aplicar(vista);
+      guardar(vista);
+    });
+  });
+</script>

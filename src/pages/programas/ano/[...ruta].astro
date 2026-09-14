@@ -1,0 +1,28 @@
+---
+/**
+ * Archivo filtrado por año, con o sin tema encima y con sus páginas.
+ *
+ * Rutas que emite: /programas/ano/2026, /programas/ano/2026/pagina/2,
+ * /programas/ano/2026/tema/politica y su paginación. Las arma
+ * vistasDelArchivo() en src/datos/archivo.ts; acá sólo se consumen.
+ */
+import type { GetStaticPaths } from 'astro';
+import ListadoDelArchivo from '../../../componentes/ListadoDelArchivo.astro';
+import { urlDelArchivo, vistasDelArchivo } from '../../../datos/archivo';
+
+export const getStaticPaths = (() =>
+  vistasDelArchivo()
+    .filter((vista) => vista.filtro.anio)
+    .map((vista) => ({
+      // La URL canónica la arma urlDelArchivo; acá se le saca el prefijo
+      // /programas/ano/ para quedarse con el resto del camino.
+      params: {
+        ruta: urlDelArchivo(vista.filtro, vista.pagina).replace('/programas/ano/', ''),
+      },
+      props: { filtro: vista.filtro, pagina: vista.pagina },
+    }))) satisfies GetStaticPaths;
+
+const { filtro, pagina } = Astro.props;
+---
+
+<ListadoDelArchivo filtro={filtro} pagina={pagina} />
