@@ -22,7 +22,7 @@ transiciones de página con `@view-transition` nativo. Se despliega en Cloudflar
 ```bash
 npm install
 npm run dev        # http://localhost:4321
-npm run verify     # format:check + astro check + build — lo mismo que corre CI
+npm run verify     # format:check + lint + astro check + build — lo mismo que corre CI
 npm run build      # genera dist/ e indexa el buscador con Pagefind
 npm run preview    # sirve dist/ — es la única forma de probar el buscador
 npx wrangler deploy

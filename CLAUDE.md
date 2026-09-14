@@ -60,7 +60,7 @@ Todavía no hay dominio, ni contrato firmado, ni material del cliente.
 ```bash
 npm install
 npm run dev        # http://localhost:4321
-npm run verify     # format:check + astro check + build — lo mismo que CI
+npm run verify     # format:check + lint + astro check + build — lo mismo que CI
 npm run build      # genera dist/
 npx wrangler deploy
 ```

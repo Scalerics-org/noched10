@@ -105,11 +105,11 @@ const grafoCompleto = [
     }
     <script is:inline>
       try {
-        var tema = localStorage.getItem('noched10:tema');
+        const tema = localStorage.getItem('noched10:tema');
         if (tema === 'light' || tema === 'dark') {
           document.documentElement.dataset.theme = tema;
         }
-      } catch (e) {
+      } catch {
         /* Sin localStorage manda prefers-color-scheme, que ya está en el CSS. */
       }
     </script>
