@@ -123,7 +123,19 @@
   /*
     Foco visible siempre y en todos lados. El outline va en el acento con un
     offset para que se vea igual sobre fondo oscuro y sobre fondo claro.
+
+    El `outline-color` se fija en TODOS los elementos, no sólo en el foco, y
+    eso no es redundante: el valor inicial de outline-color es currentColor, y
+    como las utilidades de transición de color también animan outline-color,
+    al recibir el foco el anillo arrancaba gris y tardaba 150 ms en llegar al
+    rojo. Para quien navega con Tab, eso es justo el momento en que necesita
+    verlo. Con el color ya puesto de antes, la transición no tiene nada que
+    animar y el anillo aparece de una.
   */
+  * {
+    outline-color: var(--color-acento);
+  }
+
   :focus-visible {
     outline: 3px solid var(--color-acento);
     outline-offset: 2px;

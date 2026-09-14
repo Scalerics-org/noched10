@@ -119,15 +119,21 @@ import Base from '../layouts/Base.astro';
      * El índice se baja en la primera búsqueda, no al cargar la página: quien
      * entra y se va no paga por él.
      *
-     * La ruta va en una variable a propósito: si fuera literal, Vite
-     * intentaría resolver /pagefind/pagefind.js en tiempo de build, y ese
-     * archivo todavía no existe porque lo genera Pagefind después de Astro.
+     * El import va armado con `new Function` a propósito. /pagefind/pagefind.js
+     * lo genera Pagefind DESPUÉS de que Astro terminó de construir, así que en
+     * tiempo de build no existe. Un `import()` normal —incluso con
+     * @vite-ignore— igual pasa por la transformación de Vite, que lo reescribe
+     * con un helper de precarga y deja la página tirando
+     * "__VITE_PRELOAD__ is not defined" en runtime. Esto lo saltea del todo.
      */
+    const importarEnRuntime = new Function('ruta', 'return import(ruta);') as (
+      ruta: string,
+    ) => Promise<unknown>;
+
     function cargarIndice(): Promise<IndicePagefind | null> {
       if (cargando) return cargando;
-      const ruta = '/pagefind/pagefind.js';
-      cargando = import(/* @vite-ignore */ ruta)
-        .then((modulo) => modulo as unknown as IndicePagefind)
+      cargando = importarEnRuntime('/pagefind/pagefind.js')
+        .then((modulo) => modulo as IndicePagefind)
         .catch(() => null);
       return cargando;
     }
