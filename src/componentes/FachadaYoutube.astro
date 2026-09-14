@@ -29,9 +29,20 @@ type Props = {
   miniatura?: ImageMetadata;
   /** La primera imagen visible de la página no se difiere. */
   prioridad?: boolean;
+  /** Tamaño del botón de play: grande en fichas, chico en tarjetas. */
+  tamano?: 'chico' | 'grande';
+  /** Duración que se muestra en la esquina, como en las carátulas del diseño. */
+  duracion?: string;
 };
 
-const { videoId, titulo, miniatura, prioridad = false } = Astro.props;
+const {
+  videoId,
+  titulo,
+  miniatura,
+  prioridad = false,
+  tamano = 'chico',
+  duracion,
+} = Astro.props;
 ---
 
 <div
@@ -78,19 +89,32 @@ const { videoId, titulo, miniatura, prioridad = false } = Astro.props;
             data-play
             data-video={videoId}
             data-titulo={titulo}
-            class="group bg-negro/35 hover:bg-negro/15 focus-visible:bg-negro/15 absolute inset-0 grid w-full place-items-center transition-colors"
+            class="group bg-negro/25 hover:bg-negro/5 focus-visible:bg-negro/5 absolute inset-0 grid w-full place-items-center transition-colors"
           >
             <span class="sr-only">Reproducir: {titulo}</span>
             <span
-              class="bg-acento-fuerte grid h-16 w-16 place-items-center rounded-full shadow-lg transition-transform group-hover:scale-110"
+              class:list={[
+                'bg-acento-fuerte group-hover:bg-rojo-claro grid place-items-center text-white transition-colors',
+                tamano === 'grande' ? 'h-16 w-16 lg:h-26 lg:w-26' : 'h-14 w-14',
+              ]}
               aria-hidden="true"
             >
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="#f4f3ef">
+              <svg
+                class={tamano === 'grande' ? 'h-6 w-6 lg:h-8 lg:w-8' : 'h-5 w-5'}
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
                 <path d="M8 5v14l11-7z" />
               </svg>
             </span>
           </button>
         ) : null}
+
+        {duracion && (
+          <span class="bg-negro/85 text-hueso pointer-events-none absolute right-0 bottom-0 px-2.5 py-1.5 font-mono text-[0.7rem] font-bold">
+            {duracion}
+          </span>
+        )}
       </>
     ) : (
       /* TODO: dato pendiente del cliente — los videoId del canal. */

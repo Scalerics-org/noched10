@@ -1,0 +1,149 @@
+---
+/**
+ * Barra de próxima emisión con cuenta regresiva (diseño 1e / 1f).
+ *
+ * El servidor pinta la barra completa con la etiqueta del horario; el script
+ * sólo llena los dígitos. Sin JavaScript se lee "Próxima emisión · Martes
+ * 21:00" igual, y los dígitos quedan en "--".
+ *
+ * Los dígitos van con aria-hidden: un lector de pantalla que anuncia un número
+ * nuevo cada segundo no deja usar la página. La información ya está en el
+ * texto de la etiqueta.
+ *
+ * TODO: dato pendiente del cliente — el horario sale del diseño (maqueta.ts),
+ * no está confirmado. Ver programa.ts.
+ */
+import { proximaEmision } from '../datos/maqueta';
+import { plataformas } from '../datos/programa';
+
+const unidades = [
+  { clave: 'dias', letra: 'D' },
+  { clave: 'horas', letra: 'H' },
+  { clave: 'minutos', letra: 'M' },
+  { clave: 'segundos', letra: 'S' },
+] as const;
+
+const canales = plataformas.map((p) => p.nombre).join(' · ');
+---
+
+<div
+  class="bg-banda border-b-2 border-b-[var(--color-acento-fuerte)]"
+  data-cuenta-regresiva
+  data-dia={proximaEmision.diaDeLaSemana}
+  data-hora={proximaEmision.hora}
+  data-minuto={proximaEmision.minuto}
+  data-desfase={proximaEmision.desfaseUtcEnHoras}
+>
+  <div class="contenedor flex min-h-15 items-center gap-3 py-2 lg:gap-5">
+    <p
+      class="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-4 gap-y-1.5 lg:flex-none"
+    >
+      <span
+        class="etiqueta text-texto-tenue w-full text-[0.62rem] lg:w-auto lg:text-[0.7rem] lg:tracking-[0.2em]"
+      >
+        Próxima emisión <span class="lg:hidden">· {proximaEmision.etiqueta}</span>
+      </span>
+      <span
+        class="etiqueta text-texto hidden text-[0.95rem] tracking-[0.1em] lg:inline"
+      >
+        {proximaEmision.etiqueta}
+      </span>
+      <span class="text-texto flex items-baseline gap-1.5" aria-hidden="true">
+        {
+          unidades.map((u, i) => (
+            <>
+              <span
+                class:list={[
+                  'dato text-xl lg:text-2xl',
+                  i === unidades.length - 1 && 'text-acento',
+                ]}
+                data-unidad={u.clave}
+              >
+                --
+              </span>
+              <span class="text-texto-tenue mr-1 text-[0.6rem] font-extrabold">
+                {u.letra}
+              </span>
+            </>
+          ))
+        }
+      </span>
+    </p>
+
+    <p
+      class="text-texto-suave mr-auto ml-4 hidden text-[0.8rem] leading-tight xl:block"
+    >
+      {canales}
+    </p>
+
+    <a
+      href={proximaEmision.urlEnVivo}
+      class="boton boton-primario min-h-11 shrink-0 px-4 text-[0.72rem] lg:px-5"
+      rel="noopener"
+    >
+      <span class="bg-blanco animate-latido h-2 w-2 rounded-full" aria-hidden="true"
+      ></span>
+      <span class="hidden sm:inline">Ver en vivo</span><span class="sm:hidden"
+        >En vivo</span
+      >
+    </a>
+  </div>
+</div>
+
+<script>
+  /**
+   * Cuenta regresiva a la próxima emisión, en hora de Montevideo sin importar
+   * la zona horaria de quien mira. Un solo intervalo por página.
+   */
+  const SEGUNDO = 1000;
+  const HORA = 3_600_000;
+  const DIA = 86_400_000;
+  const SEMANA = 7 * DIA;
+
+  const barra = document.querySelector<HTMLElement>('[data-cuenta-regresiva]');
+
+  if (barra) {
+    const dia = Number(barra.dataset.dia);
+    const hora = Number(barra.dataset.hora);
+    const minuto = Number(barra.dataset.minuto);
+    const desfase = Number(barra.dataset.desfase);
+
+    const celdas = Object.fromEntries(
+      [...barra.querySelectorAll<HTMLElement>('[data-unidad]')].map((celda) => [
+        celda.dataset.unidad,
+        celda,
+      ]),
+    );
+
+    const dosCifras = (n: number) => String(n).padStart(2, '0');
+
+    function proxima(ahora: number): number {
+      // "Ahora" corrido a la hora local de Montevideo, pero leído en UTC.
+      const local = new Date(ahora + desfase * HORA);
+      const objetivo = new Date(local);
+      objetivo.setUTCHours(hora, minuto, 0, 0);
+      objetivo.setUTCDate(local.getUTCDate() + ((dia - local.getUTCDay() + 7) % 7));
+      let diferencia = objetivo.getTime() - local.getTime();
+      if (diferencia <= 0) diferencia += SEMANA;
+      return diferencia;
+    }
+
+    function pintar() {
+      let resto = proxima(Date.now());
+      const dias = Math.floor(resto / DIA);
+      resto -= dias * DIA;
+      const horas = Math.floor(resto / HORA);
+      resto -= horas * HORA;
+      const minutos = Math.floor(resto / 60_000);
+      const segundos = Math.floor((resto - minutos * 60_000) / SEGUNDO);
+
+      celdas.dias.textContent = String(dias);
+      celdas.horas.textContent = dosCifras(horas);
+      celdas.minutos.textContent = dosCifras(minutos);
+      celdas.segundos.textContent = dosCifras(segundos);
+    }
+
+    pintar();
+    window.setInterval(pintar, SEGUNDO);
+  }
+</script>
