@@ -1,31 +1,48 @@
 ---
 import { navegacion, sitio } from '../datos/sitio';
-import { emision } from '../datos/programa';
+import { textoDeEmision } from '../datos/esquemas';
+import CambioDeTema from './CambioDeTema.astro';
 
 const rutaActual = Astro.url.pathname;
+const activo = (href: string) =>
+  href === '/' ? rutaActual === '/' : rutaActual.startsWith(href);
 ---
 
-<header class="border-humo bg-negro/95 border-b backdrop-blur">
-  <!-- Franja de próxima emisión: es lo primero que alguien viene a buscar. -->
-  <div class="bg-rojo text-hueso text-center text-sm font-semibold tracking-wide">
-    <p class="px-4 py-2">
-      Nuevo programa todos los {emision.dia}
-      {emision.hora ? `a las ${emision.hora}` : ''}
-    </p>
-  </div>
+{
+  /*
+  Barra fija de próxima emisión. Va arriba de todo y pegada porque es lo
+  primero que alguien viene a buscar: cuándo sale el programa.
+*/
+}
+<div
+  class="bg-acento-fuerte text-sobre-acento sticky top-0 z-40 text-center text-sm font-semibold tracking-wide"
+>
+  <p class="px-4 py-2">
+    {textoDeEmision()} ·{' '}
+    <a href="/donde-vernos" class="underline underline-offset-4">Dónde vernos</a>
+  </p>
+</div>
 
-  <nav class="mx-auto flex max-w-6xl flex-wrap items-center gap-6 px-4 py-4">
-    <a href="/" class="font-titulo text-xl font-black tracking-tight">
-      {sitio.nombre}
+<header class="border-borde bg-fondo/95 sticky top-9 z-30 border-b backdrop-blur">
+  <nav
+    class="contenedor flex flex-wrap items-center gap-x-6 gap-y-3 py-3"
+    aria-label="Principal"
+  >
+    <a href="/" class="font-titulo mr-auto text-xl font-black tracking-tight">
+      <span class="text-acento">Noche</span> D10
+      <span class="sr-only">— inicio</span>
     </a>
-    <ul class="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+
+    <ul
+      class="order-3 flex w-full flex-wrap gap-x-5 gap-y-2 text-sm lg:order-none lg:w-auto"
+    >
       {
         navegacion.map((item) => (
           <li>
             <a
               href={item.href}
-              aria-current={rutaActual === item.href ? 'page' : undefined}
-              class="text-gris hover:text-hueso aria-[current=page]:text-hueso transition-colors"
+              aria-current={activo(item.href) ? 'page' : undefined}
+              class="text-texto-suave hover:text-texto aria-[current=page]:text-texto aria-[current=page]:decoration-acento transition-colors aria-[current=page]:underline aria-[current=page]:decoration-2 aria-[current=page]:underline-offset-8"
             >
               {item.texto}
             </a>
@@ -33,5 +50,15 @@ const rutaActual = Astro.url.pathname;
         ))
       }
     </ul>
+
+    <a
+      href="/buscar"
+      class="text-texto-suave hover:text-texto text-sm transition-colors"
+      aria-label="Buscar en el archivo"
+    >
+      Buscar
+    </a>
+    <CambioDeTema />
   </nav>
+  <span class="sr-only">{sitio.nombre}</span>
 </header>

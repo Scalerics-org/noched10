@@ -1,11 +1,23 @@
 @import 'tailwindcss';
 
 /*
-  Tokens de marca D10. La paleta sale del escudo y de las placas de redes.
-  Todo color se define acá, en :root — nunca únicamente adentro de un media
-  query, porque entonces el tema claro queda sin definir.
+  Tokens de marca D10.
+
+  Dos capas a propósito:
+
+  1. Colores de MARCA (--color-negro, --color-rojo…). Son los del escudo y no
+     cambian nunca, ni con el tema claro ni con el oscuro. Rojo de marca
+     #C8102E, rojo claro #E63946.
+  2. Colores SEMÁNTICOS (--color-fondo, --color-texto…). Son los que usan los
+     componentes. Estos sí cambian con el tema.
+
+  Regla que no se rompe: TODO color queda definido en :root. Los media query y
+  el [data-theme] sólo reasignan tokens que ya existen. Si un color viviera
+  únicamente adentro de un @media, el tema que no matchea se renderiza sin ese
+  color y aparecen textos invisibles.
 */
 @theme {
+  /* --- Marca. Fijos. --- */
   --color-negro: #0a0a0a;
   --color-carbon: #161616;
   --color-humo: #2a2a2a;
@@ -13,9 +25,149 @@
   --color-rojo-claro: #e63946;
   --color-hueso: #f4f3ef;
   --color-gris: #9a9a9a;
+  --color-blanco: #ffffff;
 
-  --font-titulo: 'Archivo', system-ui, sans-serif;
-  --font-texto: 'Inter', system-ui, sans-serif;
+  /* --- Semánticos. Valores del tema oscuro, que es el default. --- */
+  --color-fondo: var(--color-negro);
+  --color-superficie: var(--color-carbon);
+  --color-borde: var(--color-humo);
+  --color-texto: var(--color-hueso);
+  --color-texto-suave: var(--color-gris);
+  --color-acento: var(--color-rojo-claro);
+  --color-acento-fuerte: var(--color-rojo);
+  --color-sobre-acento: var(--color-hueso);
+
+  /*
+    Escala tipográfica. Razón 1.25 en móvil y fluida hasta desktop con clamp,
+    así no hace falta un breakpoint por tamaño de texto.
+  */
+  --text-micro: 0.75rem;
+  --text-chico: 0.875rem;
+  --text-base: 1rem;
+  --text-medio: clamp(1.125rem, 1rem + 0.5vw, 1.375rem);
+  --text-grande: clamp(1.5rem, 1.2rem + 1.4vw, 2.25rem);
+  --text-titulo: clamp(2rem, 1.4rem + 3vw, 3.75rem);
+  --text-heroe: clamp(2.5rem, 1.5rem + 5vw, 5.5rem);
+
+  --font-titulo:
+    'Archivo', 'Archivo Black', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-texto: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* Grilla: una sola medida de contenedor y un solo gutter para todo el sitio. */
+  --ancho-contenido: 72rem;
+  --ancho-lectura: 44rem;
+  --gutter: 1rem;
+}
+
+/*
+  Tema claro.
+
+  Dos selectores para las dos formas de pedirlo:
+  - :root[data-theme='light'] gana siempre, es la elección explícita del toggle.
+  - El @media aplica sólo si el visitante NO eligió oscuro a mano.
+*/
+:root[data-theme='light'],
+:root[data-theme='light'] * {
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    --color-fondo: var(--color-hueso);
+    --color-superficie: var(--color-blanco);
+    --color-borde: #d9d7d0;
+    --color-texto: var(--color-negro);
+    /* #6b6b6b sobre #F4F3EF da 5.3:1: pasa AA para texto chico. */
+    --color-texto-suave: #6b6b6b;
+    --color-acento: var(--color-rojo);
+    --color-acento-fuerte: var(--color-rojo);
+    --color-sobre-acento: var(--color-hueso);
+    color-scheme: light;
+  }
+}
+
+:root[data-theme='light'] {
+  --color-fondo: var(--color-hueso);
+  --color-superficie: var(--color-blanco);
+  --color-borde: #d9d7d0;
+  --color-texto: var(--color-negro);
+  --color-texto-suave: #6b6b6b;
+  --color-acento: var(--color-rojo);
+  --color-acento-fuerte: var(--color-rojo);
+  --color-sobre-acento: var(--color-hueso);
+}
+
+:root {
+  color-scheme: dark;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+/* Transiciones de página con la API nativa: cero JavaScript. */
+@view-transition {
+  navigation: auto;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-fondo);
+    color: var(--color-texto);
+  }
+
+  /*
+    Foco visible siempre y en todos lados. El outline va en el acento con un
+    offset para que se vea igual sobre fondo oscuro y sobre fondo claro.
+  */
+  :focus-visible {
+    outline: 3px solid var(--color-acento);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Ancla con offset: la barra fija no tapa el título al saltar por #id. */
+  :target {
+    scroll-margin-top: 6rem;
+  }
+}
+
+@utility contenedor {
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--ancho-contenido);
+  padding-inline: var(--gutter);
+}
+
+/*
+  Aparición al hacer scroll, con animation-timeline de CSS. Sin librerías.
+  El @supports es obligatorio: si el navegador no soporta view(), la regla
+  entera se ignora y el contenido queda visible, que es el estado por defecto.
+  Nunca al revés — un opacity:0 sin animación que lo revierta esconde el sitio.
+*/
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .aparece {
+      animation: aparecer linear both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 28%;
+    }
+  }
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(1.25rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* Respetar siempre la preferencia de movimiento reducido del sistema. */
@@ -27,5 +179,9 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  @view-transition {
+    navigation: none;
   }
 }
