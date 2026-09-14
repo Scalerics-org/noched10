@@ -7,30 +7,62 @@
  * JS el archivo se ve igual y sigue siendo usable: lo único que se pierde es
  * poder cambiarlo.
  */
+type Props = { compacta?: boolean };
+const { compacta = false } = Astro.props;
+const boton =
+  'etiqueta text-texto-suave hover:text-texto aria-pressed:bg-acento-fuerte aria-pressed:text-sobre-acento inline-flex min-h-11 items-center gap-2 px-4 text-[0.72rem] tracking-[0.1em] transition-colors';
 ---
 
-<div class="flex items-center gap-2" data-pagefind-ignore>
-  <span class="text-texto-suave text-xs tracking-widest uppercase">Vista</span>
+<div data-pagefind-ignore>
+  {
+    !compacta && (
+      <p class="etiqueta text-texto-tenue mb-2.5 text-[0.62rem] tracking-[0.18em]">
+        Vista
+      </p>
+    )
+  }
   <div
     class="border-borde flex border"
     role="group"
     aria-label="Forma de ver el archivo"
   >
-    <button
-      type="button"
-      data-vista="lista"
-      aria-pressed="true"
-      class="text-texto-suave aria-pressed:bg-acento-fuerte aria-pressed:text-sobre-acento px-3 py-1.5 text-sm"
-    >
-      Lista
+    <button type="button" data-vista="lista" aria-pressed="true" class={boton}>
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg
+      >
+      <span class:list={[compacta && 'sr-only']}>Lista</span>
     </button>
     <button
       type="button"
       data-vista="grilla"
       aria-pressed="false"
-      class="text-texto-suave aria-pressed:bg-acento-fuerte aria-pressed:text-sobre-acento border-borde border-l px-3 py-1.5 text-sm"
+      class:list={[boton, 'border-borde border-l']}
     >
-      Grilla
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+        ><rect x="3" y="3" width="7" height="7"></rect><rect
+          x="14"
+          y="3"
+          width="7"
+          height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect
+          x="14"
+          y="14"
+          width="7"
+          height="7"></rect></svg
+      >
+      <span class:list={[compacta && 'sr-only']}>Grilla</span>
     </button>
   </div>
 </div>
@@ -64,20 +96,24 @@
     if (!lista) return;
 
     lista.dataset.vista = vista;
-    document.querySelectorAll<HTMLButtonElement>('[data-vista]').forEach((boton) => {
-      boton.setAttribute('aria-pressed', String(boton.dataset.vista === vista));
-    });
+    document
+      .querySelectorAll<HTMLButtonElement>('button[data-vista]')
+      .forEach((boton) => {
+        boton.setAttribute('aria-pressed', String(boton.dataset.vista === vista));
+      });
   }
 
   const guardada = leer();
   if (guardada === 'grilla' || guardada === 'lista') aplicar(guardada);
 
-  document.querySelectorAll<HTMLButtonElement>('[data-vista]').forEach((boton) => {
-    boton.addEventListener('click', () => {
-      const vista = boton.dataset.vista;
-      if (!vista) return;
-      aplicar(vista);
-      guardar(vista);
+  document
+    .querySelectorAll<HTMLButtonElement>('button[data-vista]')
+    .forEach((boton) => {
+      boton.addEventListener('click', () => {
+        const vista = boton.dataset.vista;
+        if (!vista) return;
+        aplicar(vista);
+        guardar(vista);
+      });
     });
-  });
 </script>
