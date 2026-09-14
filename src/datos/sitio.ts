@@ -22,12 +22,19 @@ export const sitio = {
   imagenOg: '/og-noche-d10.png',
 } as const;
 
+/**
+ * Navegación principal.
+ *
+ * /16-anos quedó afuera a propósito: la página no existe todavía y un link
+ * roto en la barra principal de todas las páginas es peor que una sección de
+ * menos. Entra cuando el cliente pase el material del aniversario.
+ * TODO: dato pendiente del cliente — material de los 16 años.
+ */
 export const navegacion = [
   { texto: 'Programas', href: '/programas' },
   { texto: 'Entrevistas', href: '/entrevistas' },
   { texto: 'Invitados', href: '/invitados' },
   { texto: 'Equipo', href: '/equipo' },
-  { texto: '16 años', href: '/16-anos' },
   { texto: 'Dónde vernos', href: '/donde-vernos' },
   { texto: 'Anunciantes', href: '/anunciantes' },
 ] as const;

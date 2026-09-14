@@ -24,6 +24,7 @@ const grupos = [...porInicial.entries()].sort((a, b) => a[0].localeCompare(b[0],
   titulo="Invitados"
   descripcion={`Las personas que pasaron por Noche D10. Más de ${programa.invitadosAprox.toLocaleString('es-UY')} invitados en ${programa.aniosAlAire} años.`}
   migasDePan={[{ nombre: 'Invitados', ruta: '/invitados' }]}
+  buscable={false}
 >
   <div class="contenedor py-12">
     <h1 class="font-titulo text-[length:var(--text-titulo)] font-black">Invitados</h1>

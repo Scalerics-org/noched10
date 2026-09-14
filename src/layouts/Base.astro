@@ -17,6 +17,13 @@ type Props = {
   migasDePan?: { nombre: string; ruta: string }[];
   /** El buscador no se indexa: es una página sin contenido propio. */
   noIndexar?: boolean;
+  /**
+   * Si esta página entra al índice de Pagefind. Las páginas de listado quedan
+   * afuera a propósito: repiten el contenido de las fichas y, si entraran,
+   * cada búsqueda devolvería primero el archivo entero en vez de la entrevista
+   * que se está buscando.
+   */
+  buscable?: boolean;
   tipoOg?: 'website' | 'article' | 'video.episode';
 };
 
@@ -27,6 +34,7 @@ const {
   grafo = [],
   migasDePan = [],
   noIndexar = false,
+  buscable = true,
   tipoOg = 'website',
 } = Astro.props;
 
@@ -122,7 +130,7 @@ const grafoCompleto = [
 
     <Cabezal />
 
-    <main id="contenido">
+    <main id="contenido" data-pagefind-body={buscable ? '' : undefined}>
       <slot />
     </main>
 

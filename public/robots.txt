@@ -1,5 +1,0 @@
-User-agent: *
-Allow: /
-
-# TODO: apuntar al dominio real cuando esté definido.
-Sitemap: http://localhost:4321/sitemap-index.xml

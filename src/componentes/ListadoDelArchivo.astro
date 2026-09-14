@@ -46,7 +46,12 @@ if (filtro.tema) {
 }
 ---
 
-<Base titulo={`${titulo}${sufijo}`} descripcion={descripcion} migasDePan={migasDePan}>
+<Base
+  titulo={`${titulo}${sufijo}`}
+  descripcion={descripcion}
+  migasDePan={migasDePan}
+  buscable={false}
+>
   {
     /*
     rel prev/next para que Google entienda que las páginas son una serie y no

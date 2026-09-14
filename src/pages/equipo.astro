@@ -1,0 +1,113 @@
+---
+/**
+ * Equipo.
+ *
+ * OJO: hay dos versiones de la conducción actual y no están resueltas. El
+ * Instagram acredita a Yessy López, Charly Álvarez y Luis Orpi; la nota de
+ * aniversario de Crónicas del Este dice Robert Moré, Charly Álvarez y Sabrina
+ * Floras. El único que coincide es Charly Álvarez.
+ *
+ * Por eso la sección de conducción sale con un aviso visible y no se publica
+ * como dato firme. Está anotado también en src/datos/equipo.ts.
+ * TODO: dato pendiente del cliente — confirmar quién conduce hoy.
+ */
+import Base from '../layouts/Base.astro';
+import {
+  columnistas,
+  conduccion,
+  conductoresHistoricos,
+  direccion,
+} from '../datos/equipo';
+import { programa } from '../datos/programa';
+
+const grupos = [
+  { titulo: 'Dirección y producción', personas: direccion, provisorio: false },
+  { titulo: 'Conducción', personas: conduccion, provisorio: true },
+  { titulo: 'Columnistas', personas: columnistas, provisorio: false },
+];
+---
+
+<Base
+  titulo="Equipo"
+  descripcion={`Quiénes hacen Noche D10: dirección, producción, conducción y columnistas del programa, al aire hace ${programa.aniosAlAire} años.`}
+  migasDePan={[{ nombre: 'Equipo', ruta: '/equipo' }]}
+>
+  <div class="contenedor py-12">
+    <h1 class="font-titulo text-[length:var(--text-titulo)] font-black">El equipo</h1>
+    <p class="text-texto-suave mt-3 max-w-2xl">
+      Noche D10 lo produce Producciones D10. Estas son las personas que están detrás del
+      programa.
+    </p>
+
+    {
+      grupos.map((grupo) => (
+        <section class="mt-12" aria-labelledby={`grupo-${grupo.titulo}`}>
+          <h2
+            id={`grupo-${grupo.titulo}`}
+            class="font-titulo text-[length:var(--text-grande)] font-black"
+          >
+            {grupo.titulo}
+          </h2>
+
+          {grupo.provisorio && (
+            /* Aviso visible, no un comentario en el código: si esto sale
+               publicado sin confirmar, acredita mal a gente real. */
+            <p class="border-acento bg-superficie mt-4 border-l-4 p-4 text-sm">
+              <strong class="font-semibold">Pendiente de confirmar.</strong> Tenemos dos
+              versiones distintas de la conducción actual y todavía no las resolvimos
+              con el programa. Esta lista no se publica como definitiva.
+            </p>
+          )}
+
+          <ul class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {grupo.personas.map((persona) => (
+              <li class="border-borde bg-superficie border p-5">
+                {/* TODO: dato pendiente del cliente — fotos del equipo. */}
+                <h3 class="font-semibold">{persona.nombre}</h3>
+                <p class="text-acento mt-1 text-sm">{persona.rol}</p>
+                {persona.bio && (
+                  <p class="text-texto-suave mt-3 text-sm">{persona.bio}</p>
+                )}
+                {persona.instagram && (
+                  <p class="mt-3 text-sm">
+                    <a
+                      href={`https://www.instagram.com/${persona.instagram}/`}
+                      rel="noopener"
+                      class="text-acento underline underline-offset-4"
+                    >
+                      @{persona.instagram}
+                    </a>
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))
+    }
+
+    <section class="mt-14" aria-labelledby="historicos">
+      <h2
+        id="historicos"
+        class="font-titulo text-[length:var(--text-grande)] font-black"
+      >
+        Pasaron por la conducción
+      </h2>
+      <p class="text-texto-suave mt-2 max-w-2xl text-sm">
+        En {programa.aniosAlAire} años, el programa lo condujeron también:
+      </p>
+      <ul class="text-texto-suave mt-4 flex flex-wrap gap-x-2 gap-y-1">
+        {
+          conductoresHistoricos.map((nombre, i) => (
+            <li>
+              {nombre}
+              {i < conductoresHistoricos.length - 1 && (
+                <span aria-hidden="true"> ·</span>
+              )}
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+  </div>
+</Base>

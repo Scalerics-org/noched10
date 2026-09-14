@@ -1,0 +1,203 @@
+---
+/**
+ * Buscador.
+ *
+ * Pagefind indexa el sitio ya construido, en el paso de build, y sirve un
+ * índice partido en pedacitos que el navegador baja a demanda. Por eso el
+ * buscador vive en su propia página: su JavaScript no toca el presupuesto de
+ * la home, que es donde se mide.
+ *
+ * En `astro dev` el índice todavía no existe —se genera contra dist/—, así
+ * que acá el buscador avisa en vez de romperse. Para probarlo:
+ * `npm run build && npm run preview`.
+ */
+import Base from '../layouts/Base.astro';
+---
+
+<Base
+  titulo="Buscar"
+  descripcion="Buscá entrevistas, invitados y temas en el archivo de Noche D10."
+  noIndexar
+  buscable={false}
+>
+  <div class="contenedor py-12">
+    <h1 class="font-titulo text-[length:var(--text-titulo)] font-black">
+      Buscar en el archivo
+    </h1>
+    <p class="text-texto-suave mt-3 max-w-2xl">
+      Por nombre de invitado, por tema, por título de la entrevista o por lo que se dijo
+      en el programa.
+    </p>
+
+    {
+      /*
+      El form sigue siendo un form de verdad: sin JS, enviar lleva a
+      /buscar?q=... y la página explica qué pasó, en vez de tragarse el envío.
+    */
+    }
+    <form
+      action="/buscar"
+      method="get"
+      class="mt-8 flex max-w-2xl flex-wrap gap-2"
+      id="form-de-busqueda"
+    >
+      <label for="q" class="sr-only">Qué estás buscando</label>
+      <input
+        type="search"
+        id="q"
+        name="q"
+        autocomplete="off"
+        placeholder="Por ejemplo: Robert Silva, humor, Los Iracundos"
+        class="border-borde bg-fondo text-texto placeholder:text-texto-suave min-w-0 flex-1 border px-4 py-3"
+      />
+      <button
+        type="submit"
+        class="bg-acento-fuerte text-sobre-acento px-5 py-3 text-sm font-semibold hover:opacity-90"
+      >
+        Buscar
+      </button>
+    </form>
+
+    <noscript>
+      <p class="border-borde mt-6 max-w-2xl border p-4 text-sm">
+        El buscador necesita JavaScript para leer el índice. Sin JavaScript podés
+        recorrer el archivo completo desde{' '}
+        <a href="/programas" class="text-acento underline underline-offset-4"
+          >Programas</a
+        >, filtrando por año y por tema, o por el{' '}
+        <a href="/invitados" class="text-acento underline underline-offset-4"
+          >índice de invitados</a
+        >.
+      </p>
+    </noscript>
+
+    <p
+      id="estado-de-busqueda"
+      class="text-texto-suave mt-8 text-sm"
+      role="status"
+      aria-live="polite"
+    >
+    </p>
+
+    <ol id="resultados" class="mt-4 max-w-3xl divide-y divide-[var(--color-borde)]">
+    </ol>
+  </div>
+</Base>
+
+<script>
+  type Resultado = {
+    url: string;
+    meta: { title?: string };
+    excerpt: string;
+  };
+
+  type IndicePagefind = {
+    search: (
+      consulta: string,
+    ) => Promise<{ results: { data: () => Promise<Resultado> }[] }>;
+    options?: (opciones: Record<string, unknown>) => Promise<void>;
+  };
+
+  const entradaCruda = document.getElementById('q') as HTMLInputElement | null;
+  const salidaCruda = document.getElementById('resultados') as HTMLOListElement | null;
+  const estadoCruda = document.getElementById('estado-de-busqueda');
+  const formularioCrudo = document.getElementById(
+    'form-de-busqueda',
+  ) as HTMLFormElement | null;
+
+  if (entradaCruda && salidaCruda && estadoCruda && formularioCrudo) {
+    // Reasignados a constantes locales para que TypeScript conserve el
+    // estrechamiento adentro de las funciones de abajo.
+    const entrada = entradaCruda;
+    const salida = salidaCruda;
+    const estado = estadoCruda;
+
+    let indice: IndicePagefind | null = null;
+    let cargando: Promise<IndicePagefind | null> | null = null;
+
+    /**
+     * El índice se baja en la primera búsqueda, no al cargar la página: quien
+     * entra y se va no paga por él.
+     *
+     * La ruta va en una variable a propósito: si fuera literal, Vite
+     * intentaría resolver /pagefind/pagefind.js en tiempo de build, y ese
+     * archivo todavía no existe porque lo genera Pagefind después de Astro.
+     */
+    function cargarIndice(): Promise<IndicePagefind | null> {
+      if (cargando) return cargando;
+      const ruta = '/pagefind/pagefind.js';
+      cargando = import(/* @vite-ignore */ ruta)
+        .then((modulo) => modulo as unknown as IndicePagefind)
+        .catch(() => null);
+      return cargando;
+    }
+
+    async function buscar(consulta: string) {
+      const limpia = consulta.trim();
+      salida.replaceChildren();
+
+      if (limpia.length < 2) {
+        estado.textContent = limpia.length === 0 ? '' : 'Escribí al menos dos letras.';
+        return;
+      }
+
+      estado.textContent = 'Buscando…';
+      indice ??= await cargarIndice();
+
+      if (!indice) {
+        estado.textContent =
+          'El índice de búsqueda no está disponible. Se genera en el build: probá con «npm run build && npm run preview».';
+        return;
+      }
+
+      const { results } = await indice.search(limpia);
+      const primeros = await Promise.all(results.slice(0, 20).map((r) => r.data()));
+
+      estado.textContent =
+        results.length === 0
+          ? `No encontramos nada para «${limpia}».`
+          : `${results.length} ${results.length === 1 ? 'resultado' : 'resultados'} para «${limpia}».`;
+
+      salida.replaceChildren(
+        ...primeros.map((resultado) => {
+          const item = document.createElement('li');
+          item.className = 'py-4';
+
+          const enlace = document.createElement('a');
+          enlace.href = resultado.url;
+          enlace.className = 'font-semibold hover:text-[var(--color-acento)]';
+          enlace.textContent = resultado.meta?.title ?? resultado.url;
+
+          const extracto = document.createElement('p');
+          extracto.className = 'mt-1 text-sm text-[var(--color-texto-suave)]';
+          // El excerpt de Pagefind trae <mark> alrededor de lo que matchea, y
+          // Pagefind ya escapa el resto del contenido al indexarlo.
+          extracto.innerHTML = resultado.excerpt;
+
+          item.append(enlace, extracto);
+          return item;
+        }),
+      );
+    }
+
+    // Con JS el envío lo maneja la página: no hace falta recargar.
+    formularioCrudo.addEventListener('submit', (evento) => {
+      evento.preventDefault();
+      buscar(entrada.value);
+    });
+
+    let temporizador: number | undefined;
+    entrada.addEventListener('input', () => {
+      window.clearTimeout(temporizador);
+      // Sin este respiro se dispara una búsqueda por cada tecla apretada.
+      temporizador = window.setTimeout(() => buscar(entrada.value), 180);
+    });
+
+    // Si se llegó con ?q=... (por ejemplo desde el form de la home), se busca solo.
+    const inicial = new URLSearchParams(location.search).get('q');
+    if (inicial) {
+      entrada.value = inicial;
+      buscar(inicial);
+    }
+  }
+</script>

@@ -1,0 +1,117 @@
+---
+import Base from '../layouts/Base.astro';
+import { contacto, destinoDeFormularios } from '../datos/contacto';
+import { redes } from '../datos/sitio';
+---
+
+<Base
+  titulo="Contacto"
+  descripcion="Cómo comunicarse con Noche D10 y con Producciones D10."
+  migasDePan={[{ nombre: 'Contacto', ruta: '/contacto' }]}
+>
+  <div class="contenedor max-w-[var(--ancho-lectura)] py-12">
+    <h1 class="font-titulo text-[length:var(--text-titulo)] font-black">Contacto</h1>
+    <p class="text-texto-suave mt-3">
+      Para proponer un invitado, mandar material o consultar por pauta publicitaria.
+    </p>
+
+    <dl class="mt-10 space-y-6">
+      <div>
+        <dt class="text-texto-suave text-xs font-semibold tracking-widest uppercase">
+          Correo
+        </dt>
+        <dd class="mt-1">
+          {
+            contacto.correoGeneral ? (
+              <a
+                href={`mailto:${contacto.correoGeneral}`}
+                class="text-acento underline underline-offset-4"
+              >
+                {contacto.correoGeneral}
+              </a>
+            ) : (
+              /* TODO: dato pendiente del cliente — correo de contacto.
+                 No se inventa: un correo equivocado en un sitio indexado se
+                 arrastra durante años. */
+              <span class="text-texto-suave">
+                Pendiente de confirmar con el programa.
+              </span>
+            )
+          }
+        </dd>
+      </div>
+
+      <div>
+        <dt class="text-texto-suave text-xs font-semibold tracking-widest uppercase">
+          Teléfono
+        </dt>
+        <dd class="mt-1">
+          {
+            contacto.telefono ? (
+              <a
+                href={`tel:${contacto.telefono.replace(/\s/g, '')}`}
+                class="text-acento underline underline-offset-4"
+              >
+                {contacto.telefono}
+              </a>
+            ) : (
+              /* TODO: dato pendiente del cliente — teléfono. */
+              <span class="text-texto-suave">
+                Pendiente de confirmar con el programa.
+              </span>
+            )
+          }
+        </dd>
+      </div>
+
+      <div>
+        <dt class="text-texto-suave text-xs font-semibold tracking-widest uppercase">
+          Redes
+        </dt>
+        <dd class="mt-2 flex flex-wrap gap-3">
+          {
+            redes.map((red) => (
+              <a
+                href={red.href}
+                rel="noopener me"
+                class="border-borde hover:border-acento hover:text-acento block border px-4 py-2 text-sm transition-colors"
+              >
+                {red.nombre}
+              </a>
+            ))
+          }
+        </dd>
+      </div>
+    </dl>
+
+    <section class="border-borde mt-12 border-t pt-10" aria-labelledby="pauta">
+      <h2 id="pauta" class="font-titulo text-[length:var(--text-grande)] font-black">
+        ¿Querés anunciar?
+      </h2>
+      <p class="text-texto-suave mt-3">
+        La consulta de pauta tiene su propio formulario, con los formatos y el alcance
+        del programa.
+      </p>
+      <p class="mt-6">
+        <a
+          href="/anunciantes"
+          class="bg-acento-fuerte text-sobre-acento inline-block px-5 py-3 text-sm font-semibold hover:opacity-90"
+        >
+          Ir a anunciantes
+        </a>
+      </p>
+    </section>
+
+    {
+      !destinoDeFormularios.action && (
+        /* TODO: dato pendiente del cliente — a dónde se envían las consultas.
+           Mientras no esté definido, las páginas no muestran un formulario que
+           postee a un endpoint inventado: se perderían consultas sin aviso. */
+        <p class="text-texto-suave mt-10 text-sm">
+          Estamos terminando de configurar el envío de formularios desde el sitio.
+          Mientras tanto, la vía más rápida son las redes.
+        </p>
+      )
+    }
+  </div>
+</Base>
