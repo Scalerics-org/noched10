@@ -1,0 +1,46 @@
+# Trae el feed del canal de YouTube y, si hay programas nuevos, commitea el
+# resultado. El deploy lo dispara ese commit, no este workflow.
+#
+# Cuándo: el programa sale en vivo los jueves y se reestrena los martes. El
+# cron corre miércoles y viernes a las 12:00 UTC (09:00 de Montevideo), así
+# que el sitio queda al día a la mañana siguiente de cada pase.
+name: Traer feed de YouTube
+
+on:
+  schedule:
+    - cron: '0 12 * * 3,5'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  traer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Traer el feed
+        run: npm run feed
+
+      - name: Verificar que sigue compilando
+        run: npm run verify
+
+      - name: Commitear si hay programas nuevos
+        run: |
+          if git diff --quiet src/datos/feed.json; then
+            echo "Nada nuevo en el feed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/datos/feed.json
+          git commit -m "feat(feed): traer programas nuevos del canal"
+          git push

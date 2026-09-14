@@ -1,13 +1,14 @@
 /**
  * Equipo del programa.
  *
- * TRAMPA: hay dos versiones de la conducción actual y no están resueltas.
- * - El Instagram (relevado 14/09/2026) acredita a Yessy López, Charly Álvarez
- *   y Luis Orpi.
- * - La nota de aniversario de Crónicas del Este menciona como conductores 2026
- *   a Robert Moré, Charly Álvarez y Sabrina Floras.
- * El único nombre que coincide es Charly Álvarez.
- * TODO: preguntarle al cliente quién conduce hoy antes de publicar esta página.
+ * CONDUCCIÓN: resuelta. Las descripciones de los videos del canal acreditan
+ * "CONDUCEN: Charly Alvarez, Yessy López, Luis Orpi" en las emisiones de
+ * agosto de 2026, y "Conducción: Yessy López y Charly Álvarez" en las
+ * entrevistas. Coincide con la bio de Instagram.
+ *
+ * La nota de aniversario de Crónicas del Este menciona a Robert Moré y Sabrina
+ * Floras como conductores 2026: es información vieja o de otro tramo del año.
+ * Gana el canal, que es la fuente más reciente y más específica.
  */
 export type Persona = {
   nombre: string;
@@ -36,7 +37,6 @@ export const direccion: Persona[] = [
   },
 ];
 
-/** TODO: confirmar con el cliente. Ver la trampa de arriba. */
 export const conduccion: Persona[] = [
   {
     nombre: 'Yessy López',
@@ -84,6 +84,15 @@ export const columnistas: Persona[] = [
     foto: null,
   },
   { nombre: 'Luis Silvera', rol: 'Deporte', instagram: null, bio: null, foto: null },
+  {
+    // Aparece en las descripciones del canal conduciendo junto a Luis Betarte.
+    // TODO: confirmar en qué segmento o programa participa.
+    nombre: 'Dra. Andrea Ramírez Ponzo',
+    rol: 'Columnista',
+    instagram: null,
+    bio: null,
+    foto: null,
+  },
 ];
 
 /** Pasaron por la conducción en estos 16 años. Material para /16-anos. */

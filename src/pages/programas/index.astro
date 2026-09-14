@@ -24,8 +24,6 @@ const formatoFecha = new Intl.DateTimeFormat('es-UY', { dateStyle: 'long' });
               <time datetime={emision.fecha}>
                 {formatoFecha.format(new Date(emision.fecha))}
               </time>
-              {' · '}
-              {emision.duracion}
             </p>
             <h2 class="mt-1 text-lg font-semibold">{emision.titulo}</h2>
             <p class="text-gris mt-1 text-sm">

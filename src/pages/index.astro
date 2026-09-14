@@ -22,7 +22,10 @@ const formatoFecha = new Intl.DateTimeFormat('es-UY', { dateStyle: 'long' });
       {ultima.titulo}
     </h1>
     <div class="mt-6 max-w-3xl">
-      <FachadaYoutube videoId={ultima.videoId} titulo={ultima.titulo} />
+      <FachadaYoutube
+        videoId={ultima.videoEstreno ?? ultima.videoEnVivo}
+        titulo={ultima.titulo}
+      />
     </div>
   </section>
 
@@ -53,7 +56,9 @@ const formatoFecha = new Intl.DateTimeFormat('es-UY', { dateStyle: 'long' });
       {
         destacadas.map((pieza) => (
           <li class="border-humo bg-carbon border p-5">
-            <p class="text-gris text-xs tracking-widest uppercase">{pieza.duracion}</p>
+            <p class="text-gris text-xs tracking-widest uppercase">
+              {pieza.temas.join(' · ') || 'Entrevista'}
+            </p>
             <h3 class="mt-2 leading-snug font-semibold">{pieza.titulo}</h3>
           </li>
         ))
@@ -72,8 +77,6 @@ const formatoFecha = new Intl.DateTimeFormat('es-UY', { dateStyle: 'long' });
               <time datetime={emision.fecha}>
                 {formatoFecha.format(new Date(emision.fecha))}
               </time>
-              {' · '}
-              {emision.duracion}
             </span>
           </li>
         ))

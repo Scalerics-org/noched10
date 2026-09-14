@@ -27,11 +27,11 @@ export const plataformas = [
     href: 'https://x.com/lanacional1130',
   },
   {
-    nombre: 'VIVO TV',
+    // El canal firma "VIVO TV — LA TREINTA" en las descripciones de sus
+    // videos. "La Treinta" es como se conoce a CX30.
+    nombre: 'VIVO TV La Treinta',
     tipo: 'television',
-    // TODO: confirmar el nombre exacto de la señal. La nota de prensa dice
-    // "Radio Nacional TV" y el Instagram acredita a @vivotvuy.
-    detalle: 'señal abierta',
+    detalle: 'señal de televisión',
     href: null,
   },
   {
@@ -50,17 +50,32 @@ export const plataformas = [
 ] as const;
 
 /**
- * Horario de emisión.
- * Los estrenos publicados en YouTube (04/08, 11/08 y 18/08 de 2026) caen los
- * tres martes, así que el programa es semanal y va los martes.
- * TODO: falta el horario exacto, y si radio y TV coinciden.
+ * Cómo y cuándo sale el programa.
+ *
+ * Sale DOS VECES: en vivo los jueves, y en estreno diferido el martes
+ * siguiente. Eso se ve en los títulos del canal: las "Edición - DD-MM-AA -
+ * EN VIVO" caen jueves (06-08-26 y 13-08-26) y las "- ESTRENO" caen martes
+ * (11-08-26 y 18-08-26), con los mismos invitados.
+ *
+ * El horario de las 22:00 sale de la descripción de una entrevista del canal:
+ * "Entrevista en vivo: jueves 13 de agosto de 2026, 22:00 horas".
+ *
+ * OJO: las descripciones del canal se contradicen entre sí. Varias arrastran
+ * un texto pegado que dice "Lunes a viernes 19 hs", que parece ser de otro
+ * programa de la casa y no de éste. No inventamos: hay que preguntárselo al
+ * cliente y recién ahí publicar un horario.
  */
 export const emision = {
-  dia: 'martes',
-  hora: null,
+  dia: 'jueves',
+  hora: '22:00',
   frecuencia: 'semanal',
   duracionAprox: '2 horas',
+  reestreno: 'martes',
+  horarioConfirmado: false,
 } as const;
+
+/** El canal rotula la temporada en curso como "Temporada 16". */
+export const temporada = 16;
 
 /** Causas con las que el programa trabaja. Es parte de su posicionamiento. */
 export const alianzas = [

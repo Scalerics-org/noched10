@@ -39,15 +39,34 @@ Queda en **http://localhost:4321**.
 | `/16-anos`      | especial de aniversario                                       | pendiente                            |
 | `/anunciantes`  | media kit y formulario de pauta                               | pendiente                            |
 
+## De dónde sale el contenido
+
+Del canal de YouTube. Un workflow corre miércoles y viernes, trae el feed,
+clasifica los títulos y commitea lo nuevo; ese commit dispara el deploy. El
+cliente no toca nada: publica en YouTube como siempre.
+
+Las correcciones a mano — tildes que el canal se come, el tema de cada
+invitado — van en `src/datos/curaduria.ts`, que pisa lo que trae el feed.
+`feed.json` no se edita a mano.
+
+**Límite conocido:** el feed de YouTube devuelve solo las últimas 15 entradas,
+así que mantiene el sitio al día pero no trae los 496 videos ya publicados. La
+carga del archivo viejo es una tarea aparte.
+
 ## Estructura
 
 ```
 src/
+  dominio/       feed.ts (parser puro) · feed.test.ts
   datos/         sitio.ts · programa.ts · equipo.ts · emisiones.ts
+                 feed.json (generado) · curaduria.ts (a mano)
   componentes/   Cabezal.astro · PieDePagina.astro · FachadaYoutube.astro
   layouts/       Base.astro
   pages/         index.astro · programas/index.astro · donde-vernos.astro
   estilos/       global.css
+herramientas/    traer-feed.ts
+.github/
+  workflows/     traer-feed.yml
 public/          robots.txt
 ```
 
@@ -70,8 +89,9 @@ conecta.
 ## Pendiente del cliente
 
 - Logo en vectorial (SVG/AI/EPS) de las dos marcas
-- Quién conduce hoy — hay dos versiones, ver `CLAUDE.md`
-- Día y horario exacto de emisión en radio y en TV
+- Horario exacto de emisión: las descripciones del canal se contradicen entre sí
+  (ver `CLAUDE.md`)
+- Carga del archivo viejo: 496 videos que el feed no alcanza
 - Lista de canales de cable del interior, con localidades
 - Teléfono, mail y dirección de contacto
 - Dominio definido y comprado
