@@ -22,6 +22,12 @@ export type Pieza = {
 
 export type Emision = {
   fecha: string; // ISO
+  /**
+   * Número de capítulo. Son ~3.000 y el canal de YouTube no los numera, así
+   * que hoy no lo sabemos para ninguna emisión.
+   * TODO: dato pendiente del cliente — la numeración de capítulos.
+   */
+  numero: number | null;
   titulo: string;
   videoId: string | null;
   duracion: string;
@@ -33,6 +39,7 @@ export type Emision = {
 export const emisiones: Emision[] = [
   {
     fecha: '2026-08-18',
+    numero: null,
     titulo: 'Sergio Secinaro / Robert Silva / Alejandro Quintino',
     videoId: null,
     duracion: '2:02:31',
@@ -76,6 +83,7 @@ export const emisiones: Emision[] = [
   },
   {
     fecha: '2026-08-11',
+    numero: null,
     titulo: 'Carlos Alberto Rodríguez / Eduardo Acevedo / Alejandro Quintino',
     videoId: null,
     duracion: '2:04:23',
@@ -117,6 +125,7 @@ export const emisiones: Emision[] = [
   },
   {
     fecha: '2026-08-04',
+    numero: null,
     titulo: 'Mae Susana Andrade / Dito Galeano / Las Humoradas de Luis Orpi',
     videoId: null,
     duracion: '1:41:26',
@@ -166,6 +175,7 @@ export const emisiones: Emision[] = [
   },
   {
     fecha: '2026-07-28',
+    numero: null,
     titulo: 'Fabricio Speranza / Luis “Ronco” López / Gonzalo “El Pela” Romero',
     videoId: null,
     duracion: '1:50:00',
@@ -207,6 +217,7 @@ export const emisiones: Emision[] = [
   },
   {
     fecha: '2026-07-21',
+    numero: null,
     titulo: 'Niusa Samba / Fernando Tetes / Luigi Mega',
     videoId: null,
     duracion: '1:45:00',
@@ -240,6 +251,7 @@ export const emisiones: Emision[] = [
   },
   {
     fecha: '2026-07-14',
+    numero: null,
     titulo: 'Jorge “Superman” Seré / Jorge Bonica',
     videoId: null,
     duracion: '1:40:00',
@@ -265,6 +277,7 @@ export const emisiones: Emision[] = [
   },
   {
     fecha: '2026-07-07',
+    numero: null,
     titulo: 'Sonora Palacio / María Julia Muñoz',
     videoId: null,
     duracion: '1:45:00',
@@ -290,6 +303,7 @@ export const emisiones: Emision[] = [
   },
   {
     fecha: '2026-06-30',
+    numero: null,
     titulo: 'Nelson Pino / Tenencia compartida',
     videoId: null,
     duracion: '1:40:00',
@@ -325,15 +339,8 @@ export const temas = [
   'humor',
 ] as const;
 
-/** Todas las piezas, aplanadas, para las listas y el buscador. */
-export const piezas = emisiones.flatMap((emision) =>
-  emision.piezas.map((pieza) => ({ ...pieza, fecha: emision.fecha })),
-);
-
-/** Índice de invitados con todas sus apariciones. Es el oro para SEO. */
-export const invitados = [...new Set(piezas.flatMap((pieza) => pieza.invitados))]
-  .sort((a, b) => a.localeCompare(b, 'es'))
-  .map((nombre) => ({
-    nombre,
-    apariciones: piezas.filter((pieza) => pieza.invitados.includes(nombre)),
-  }));
+/**
+ * Las piezas aplanadas y el índice de invitados viven en
+ * src/datos/invitados.ts; el archivo paginado y los filtros, en
+ * src/datos/archivo.ts. Este archivo es sólo el dato crudo.
+ */
