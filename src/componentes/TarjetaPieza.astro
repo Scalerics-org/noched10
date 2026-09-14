@@ -1,0 +1,63 @@
+---
+/** Tarjeta de una pieza (entrevista, humor, columna o música). */
+import { urlDePieza } from '../datos/archivo';
+import { formatearFecha } from '../datos/texto';
+
+type Props = {
+  titulo: string;
+  tipo: string;
+  duracion: string;
+  fecha: string;
+  invitados: string[];
+  temas: string[];
+  /** El título de la tarjeta puede no ser el <h2> de la página. */
+  nivel?: 'h2' | 'h3';
+};
+
+const etiquetas: Record<string, string> = {
+  entrevista: 'Entrevista',
+  humor: 'Humor',
+  columna: 'Columna',
+  musica: 'Música en vivo',
+};
+
+const { titulo, tipo, duracion, fecha, invitados, temas, nivel = 'h3' } = Astro.props;
+const Titulo = nivel;
+---
+
+<article
+  class="border-borde bg-superficie hover:border-acento group flex h-full flex-col border p-5 transition-colors"
+>
+  <p
+    class="text-texto-suave flex flex-wrap items-center gap-2 text-xs tracking-widest uppercase"
+  >
+    <span class="text-acento font-semibold">{etiquetas[tipo] ?? tipo}</span>
+    <span aria-hidden="true">·</span>
+    <span>{duracion}</span>
+  </p>
+
+  <Titulo class="mt-3 leading-snug font-semibold">
+    <a
+      href={urlDePieza(titulo)}
+      class="group-hover:text-acento transition-colors after:absolute after:inset-0"
+    >
+      {titulo}
+    </a>
+  </Titulo>
+
+  <p class="text-texto-suave mt-auto pt-4 text-sm">
+    <time datetime={fecha}>{formatearFecha(fecha)}</time>
+  </p>
+
+  {
+    invitados.length > 0 && (
+      <p class="text-texto-suave mt-1 text-sm">
+        {/* Los links de invitado no pueden ir adentro del stretched link de
+            arriba: quedarían inalcanzables con el mouse y con el teclado. */}
+        Con {invitados.join(', ')}
+      </p>
+    )
+  }
+
+  <p class="sr-only">Temas: {temas.join(', ')}</p>
+</article>

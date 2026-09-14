@@ -107,6 +107,9 @@ const grafoCompleto = [
     </script>
 
     <DatosEstructurados grafo={grafoCompleto} />
+
+    {/* Metadatos propios de la página: rel prev/next del archivo, por ejemplo. */}
+    <slot name="cabeza" />
   </head>
 
   <body class="bg-fondo text-texto font-texto antialiased">
