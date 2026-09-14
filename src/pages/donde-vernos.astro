@@ -2,7 +2,7 @@
 import Base from '../layouts/Base.astro';
 import { emision, plataformas } from '../datos/programa';
 import { redes } from '../datos/sitio';
-import { textoDeEmision } from '../datos/esquemas';
+import { horaConfirmada, textoDeEmision } from '../datos/esquemas';
 
 const etiquetas: Record<string, string> = {
   radio: 'Radio',
@@ -24,10 +24,10 @@ const etiquetas: Record<string, string> = {
       {textoDeEmision()}, de {emision.duracionAprox}.
     </p>
     {
-      emision.hora === null && (
+      horaConfirmada() === null && (
         /* TODO: dato pendiente del cliente — horario exacto de emisión.
-           El día sale de los estrenos en YouTube (04, 11 y 18 de agosto de
-           2026 caen los tres martes); la hora no la sabemos. */
+           Los títulos del canal muestran vivo los jueves y estreno los martes;
+           las descripciones dicen 22:00 pero se contradicen. Ver programa.ts. */
         <p class="text-texto-suave mt-2 max-w-2xl text-sm">
           El horario exacto lo estamos confirmando.
         </p>

@@ -28,8 +28,8 @@ Magazine uruguayo de entrevistas, música en vivo y humor, al aire desde hace
 ${programa.aniosAlAire} años. Lo produce Producciones D10. Son cerca de
 ${programa.capitulosAprox} capítulos y más de ${programa.invitadosAprox} invitados.
 
-Emisión: ${emision.frecuencia}, los ${emision.dia}, de ${emision.duracionAprox}.
-${emision.hora ? `Horario: ${emision.hora}.` : 'Horario exacto: sin confirmar.'}
+Emisión: ${emision.frecuencia}, en vivo los ${emision.dia} y en reestreno los ${emision.reestreno}, de ${emision.duracionAprox}.
+${emision.horarioConfirmado ? `Horario: ${emision.hora}.` : 'Horario exacto: sin confirmar.'}
 
 Se emite por: ${plataformas.map((p) => p.nombre).join(', ')}.
 

@@ -2,14 +2,9 @@
 /**
  * Equipo.
  *
- * OJO: hay dos versiones de la conducción actual y no están resueltas. El
- * Instagram acredita a Yessy López, Charly Álvarez y Luis Orpi; la nota de
- * aniversario de Crónicas del Este dice Robert Moré, Charly Álvarez y Sabrina
- * Floras. El único que coincide es Charly Álvarez.
- *
- * Por eso la sección de conducción sale con un aviso visible y no se publica
- * como dato firme. Está anotado también en src/datos/equipo.ts.
- * TODO: dato pendiente del cliente — confirmar quién conduce hoy.
+ * La conducción (Yessy López, Charly Álvarez, Luis Orpi) está confirmada
+ * contra las descripciones del canal: ver src/datos/equipo.ts.
+ * El aviso de `provisorio` queda para cualquier grupo que vuelva a estar en duda.
  */
 import Base from '../layouts/Base.astro';
 import {
@@ -22,7 +17,7 @@ import { programa } from '../datos/programa';
 
 const grupos = [
   { titulo: 'Dirección y producción', personas: direccion, provisorio: false },
-  { titulo: 'Conducción', personas: conduccion, provisorio: true },
+  { titulo: 'Conducción', personas: conduccion, provisorio: false },
   { titulo: 'Columnistas', personas: columnistas, provisorio: false },
 ];
 ---

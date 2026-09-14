@@ -180,16 +180,17 @@ Se vuelve a medir antes de cada commit que toque la home.
 
 Todo esto está marcado en el código con `TODO: dato pendiente del cliente`.
 
-1. **Quién conduce hoy.** Hay dos versiones y no coinciden: el Instagram acredita a Yessy
-   López, Charly Álvarez y Luis Orpi; la nota de Crónicas del Este dice Robert Moré,
-   Charly Álvarez y Sabrina Floras. `/equipo` sale con un aviso visible y no se publica
-   como definitiva hasta confirmarlo.
-2. **Los `videoId` de YouTube.** Ninguna emisión tiene video cargado.
-3. **Horario exacto de emisión.** El día (martes) se dedujo de los estrenos en YouTube;
-   la hora no la sabemos, y tampoco si radio y TV coinciden.
+1. **Rol de la Dra. Andrea Ramírez Ponzo.** Aparece en el canal pero no sabemos en qué
+   segmento. (La conducción —Yessy López, Charly Álvarez, Luis Orpi— quedó confirmada
+   contra las descripciones del canal.)
+2. **Los `videoId` que faltan.** 13 cargados a mano del canal; las emisiones del 30/06 al
+   28/07 y la del 04/08 completa siguen sin video.
+3. **Horario de emisión.** El canal muestra vivo los jueves y estreno los martes, y una
+   descripción dice 22:00, pero otras se contradicen. Va con `horarioConfirmado: false`
+   y no se publica la hora.
 4. **La lista de canales de cable del interior**, con localidad y número de señal.
-5. **El nombre exacto de la señal de TV.** La prensa dice "Radio Nacional TV" y el
-   Instagram acredita a `@vivotvuy`.
+5. **El nombre de la señal de TV.** El canal firma "VIVO TV — La Treinta"; falta que el
+   cliente lo confirme.
 6. **El total real de invitados.** "Casi 6.877" es el número que dio la prensa y es
    sospechosamente preciso; hasta confirmarlo se muestra "más de 6.800".
 7. **La numeración de los capítulos.** Sin ella no se emite `episodeNumber` en el

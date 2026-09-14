@@ -35,13 +35,16 @@ export type Emision = {
   piezas: Pieza[];
 };
 
-// TODO: los videoId reales se completan cuando se arme el ingestor del canal.
+// videoId relevados a mano del canal @produccionesD10 (feed del 14/09/2026).
+// En las emisiones es el video del ESTRENO, no el del vivo. Lo anterior al
+// 04/08 no estaba en el feed.
+// TODO: completar los videoId faltantes desde el canal.
 export const emisiones: Emision[] = [
   {
     fecha: '2026-08-18',
     numero: null,
     titulo: 'Sergio Secinaro / Robert Silva / Alejandro Quintino',
-    videoId: null,
+    videoId: 'KRB6sjJYwCI',
     duracion: '2:02:31',
     invitados: ['Sergio Secinaro', 'Robert Silva', 'Alejandro Quintino'],
     piezas: [
@@ -49,7 +52,7 @@ export const emisiones: Emision[] = [
         titulo:
           'Sergio Secinaro sin filtros: “Hay cosas que muchos no se animan a decir”',
         tipo: 'entrevista',
-        videoId: null,
+        videoId: 'k56gi7l_6wg',
         duracion: '39:19',
         invitados: ['Sergio Secinaro'],
         temas: ['política'],
@@ -58,7 +61,7 @@ export const emisiones: Emision[] = [
         titulo:
           'Robert Silva, sin filtros: gobierno, oposición, Partido Colorado y lo que viene',
         tipo: 'entrevista',
-        videoId: null,
+        videoId: 'KOgTOCXWtsA',
         duracion: '38:58',
         invitados: ['Robert Silva'],
         temas: ['política'],
@@ -66,7 +69,7 @@ export const emisiones: Emision[] = [
       {
         titulo: 'Alejandro Quintino',
         tipo: 'entrevista',
-        videoId: null,
+        videoId: 'xwe-2UcQP9Y',
         duracion: '16:20',
         invitados: ['Alejandro Quintino'],
         temas: ['política'],
@@ -74,7 +77,7 @@ export const emisiones: Emision[] = [
       {
         titulo: 'Sergio Sosa — Las Humoradas de Luis Orpi',
         tipo: 'humor',
-        videoId: null,
+        videoId: 'RPwVRiF1FDk',
         duracion: '13:03',
         invitados: ['Sergio Sosa'],
         temas: ['humor'],
@@ -85,14 +88,14 @@ export const emisiones: Emision[] = [
     fecha: '2026-08-11',
     numero: null,
     titulo: 'Carlos Alberto Rodríguez / Eduardo Acevedo / Alejandro Quintino',
-    videoId: null,
+    videoId: '0pHnAdXCRTE',
     duracion: '2:04:23',
     invitados: ['Carlos Alberto Rodríguez', 'Eduardo Acevedo', 'Alejandro Quintino'],
     piezas: [
       {
         titulo: 'Eduardo Acevedo',
         tipo: 'entrevista',
-        videoId: null,
+        videoId: '6uOVSiivNfk',
         duracion: '25:59',
         invitados: ['Eduardo Acevedo'],
         temas: ['política'],
@@ -100,7 +103,7 @@ export const emisiones: Emision[] = [
       {
         titulo: 'Carlos Alberto Rodríguez',
         tipo: 'entrevista',
-        videoId: null,
+        videoId: 'H2vSOaOQ9zM',
         duracion: '27:22',
         invitados: ['Carlos Alberto Rodríguez'],
         temas: ['sociedad'],
@@ -108,7 +111,7 @@ export const emisiones: Emision[] = [
       {
         titulo: 'Washington “Turco” Abdala',
         tipo: 'entrevista',
-        videoId: null,
+        videoId: 'wao2KhqRPps',
         duracion: '33:42',
         invitados: ['Washington “Turco” Abdala'],
         temas: ['política'],
@@ -116,7 +119,7 @@ export const emisiones: Emision[] = [
       {
         titulo: 'Anita Valiente',
         tipo: 'entrevista',
-        videoId: null,
+        videoId: '6_Xb4FnmP2c',
         duracion: '27:11',
         invitados: ['Anita Valiente'],
         temas: ['música'],
@@ -150,7 +153,7 @@ export const emisiones: Emision[] = [
       {
         titulo: 'María de Lima — 190 años del Partido Nacional',
         tipo: 'entrevista',
-        videoId: null,
+        videoId: '9DYjXI9-_WE',
         duracion: '23:19',
         invitados: ['María de Lima'],
         temas: ['política'],
@@ -158,7 +161,7 @@ export const emisiones: Emision[] = [
       {
         titulo: 'El Guapo Malavia — Las Humoradas de Luis Orpi',
         tipo: 'humor',
-        videoId: null,
+        videoId: 'VRYcC5zfdUo',
         duracion: '15:17',
         invitados: ['El Guapo Malavia'],
         temas: ['humor'],
@@ -166,7 +169,7 @@ export const emisiones: Emision[] = [
       {
         titulo: 'Carlos Goberna Jr. y Marcel Goberna (Orquesta La Decana)',
         tipo: 'musica',
-        videoId: null,
+        videoId: '1oZ6em_USB4',
         duracion: '19:48',
         invitados: ['Carlos Goberna Jr.', 'Marcel Goberna'],
         temas: ['música'],

@@ -218,14 +218,23 @@ export function migas(
  * TODO: dato pendiente del cliente — hora exacta de emisión.
  */
 export function emisionEnVivoDeclarable(): boolean {
-  return emisionEnVivo.hora !== null;
+  return horaConfirmada() !== null;
+}
+
+/**
+ * La hora que sale de las descripciones del canal no es un dato hasta que el
+ * cliente la confirme: mientras tanto se trata como si no existiera.
+ */
+export function horaConfirmada(): string | null {
+  return emisionEnVivo.horarioConfirmado ? emisionEnVivo.hora : null;
 }
 
 /** Texto plano del horario, reutilizado por la barra fija y por el JSON-LD. */
 export function textoDeEmision(): string {
-  const { dia, hora, frecuencia } = emisionEnVivo;
+  const { dia, frecuencia, reestreno } = emisionEnVivo;
+  const hora = horaConfirmada();
   const cuando = hora ? `los ${dia} a las ${hora}` : `todos los ${dia}`;
-  return `Programa ${frecuencia}, ${cuando}`;
+  return `Programa ${frecuencia}, ${cuando}, con reestreno los ${reestreno}`;
 }
 
 export const ultimaActualizacion = (iso: string) => formatearFecha(iso);

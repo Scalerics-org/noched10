@@ -34,18 +34,20 @@ Todavía no hay dominio, ni contrato firmado, ni material del cliente.
 
 ## Trampas del dominio
 
-- **Hay dos versiones de la conducción actual y no está resuelto.** El Instagram
-  acredita a Yessy López, Charly Álvarez y Luis Orpi; la nota de aniversario de
-  Crónicas del Este dice Robert Moré, Charly Álvarez y Sabrina Floras. El único que
-  coincide es Charly Álvarez. Está anotado en `src/datos/equipo.ts`. No publicar la
-  página de equipo sin confirmarlo.
+- **Cada programa se publica DOS VECES y es una sola emisión.** Sale en vivo un
+  jueves y se reestrena el martes siguiente, con dos videos distintos. En
+  `emisiones.ts` la fecha de la emisión es la del estreno (martes) y `videoId` es el
+  del estreno: no cargar el video del vivo como otra emisión.
 - **Una emisión no es un video, son cuatro.** Cada programa genera el completo (~2 h),
   una entrevista por invitado, el segmento de humor y a veces una columna. Si se
   modela como "lista de videos" se pierde toda la navegación. El modelo correcto está
   en `src/datos/emisiones.ts`.
-- **El horario de emisión es una inferencia, no un dato.** Los martes salen de las
-  fechas de estreno en YouTube (04, 11 y 18 de agosto de 2026, los tres martes). El
-  horario exacto no lo sabemos.
+- **El horario de emisión no está confirmado.** Una descripción del canal dice jueves
+  22:00; otras arrastran "Lunes a viernes 19 hs". En `programa.ts` va con
+  `horarioConfirmado: false` y ninguna página ni el JSON-LD publican la hora hasta
+  que el cliente la confirme.
+- **La sincronización automática con YouTube es etapa 2.** Existió un ingestor del
+  feed y se sacó a propósito; los `videoId` se cargan a mano en `emisiones.ts`.
 - **"Casi 6.877 invitados" es el número que dio la prensa.** Es sospechosamente
   preciso. Hasta que el cliente lo confirme se muestra "más de 6.800".
 - **El archivo tiene 3.000 capítulos: nada de infinite scroll.** Mata el footer, donde
