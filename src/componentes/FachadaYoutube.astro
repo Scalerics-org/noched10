@@ -1,0 +1,67 @@
+---
+/**
+ * Fachada de YouTube: miniatura + botón que recién al click inyecta el iframe.
+ * Embeber el iframe directo son ~900 KB y decenas de requests de terceros
+ * antes de que nadie haya apretado play. Esto no se cambia.
+ */
+type Props = {
+  videoId: string | null;
+  titulo: string;
+};
+
+const { videoId, titulo } = Astro.props;
+const miniatura = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : null;
+---
+
+<div class="bg-humo relative aspect-video w-full overflow-hidden" data-fachada>
+  {
+    videoId ? (
+      <>
+        <img
+          src={miniatura}
+          alt=""
+          width="480"
+          height="360"
+          loading="lazy"
+          class="h-full w-full object-cover"
+        />
+        <button
+          type="button"
+          data-play
+          data-video={videoId}
+          class="bg-negro/40 hover:bg-negro/20 absolute inset-0 grid place-items-center transition"
+        >
+          <span class="sr-only">Reproducir: {titulo}</span>
+          <span
+            class="bg-rojo grid h-16 w-16 place-items-center rounded-full text-2xl"
+            aria-hidden="true"
+          >
+            ▶
+          </span>
+        </button>
+      </>
+    ) : (
+      <p class="text-gris grid h-full place-items-center p-4 text-center text-sm">
+        Video pendiente de cargar
+      </p>
+    )
+  }
+</div>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('[data-play]').forEach((boton) => {
+    boton.addEventListener('click', () => {
+      const contenedor = boton.closest('[data-fachada]');
+      const video = boton.dataset.video;
+      if (!contenedor || !video) return;
+
+      const marco = document.createElement('iframe');
+      marco.src = `https://www.youtube-nocookie.com/embed/${video}?autoplay=1`;
+      marco.title = boton.textContent?.trim() ?? 'Video';
+      marco.allow = 'accelerometer; autoplay; encrypted-media; picture-in-picture';
+      marco.allowFullscreen = true;
+      marco.className = 'h-full w-full border-0';
+      contenedor.replaceChildren(marco);
+    });
+  });
+</script>

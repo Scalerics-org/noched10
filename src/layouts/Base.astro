@@ -1,0 +1,43 @@
+---
+import '../estilos/global.css';
+import Cabezal from '../componentes/Cabezal.astro';
+import PieDePagina from '../componentes/PieDePagina.astro';
+import { sitio } from '../datos/sitio';
+
+type Props = {
+  titulo: string;
+  descripcion?: string;
+};
+
+const { titulo, descripcion = sitio.descripcion } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site ?? sitio.url);
+---
+
+<!doctype html>
+<html lang={sitio.idioma} class="scroll-smooth">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{titulo} · {sitio.nombre}</title>
+    <meta name="description" content={descripcion} />
+    <link rel="canonical" href={canonical.href} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={`${titulo} · ${sitio.nombre}`} />
+    <meta property="og:description" content={descripcion} />
+    <meta property="og:locale" content="es_UY" />
+    <!-- TODO: favicon e imagen OG cuando el cliente pase el logo en vectorial. -->
+  </head>
+  <body class="bg-negro text-hueso font-texto antialiased">
+    <a
+      href="#contenido"
+      class="focus:bg-rojo sr-only focus:not-sr-only focus:px-4 focus:py-2"
+    >
+      Ir al contenido
+    </a>
+    <Cabezal />
+    <main id="contenido">
+      <slot />
+    </main>
+    <PieDePagina />
+  </body>
+</html>

@@ -1,0 +1,39 @@
+---
+import Base from '../../layouts/Base.astro';
+import { emisiones } from '../../datos/emisiones';
+
+const formatoFecha = new Intl.DateTimeFormat('es-UY', { dateStyle: 'long' });
+---
+
+<Base
+  titulo="Programas"
+  descripcion="El archivo de Noche D10: 16 años de programas, entrevistas y música."
+>
+  <section class="mx-auto max-w-6xl px-4 py-12">
+    <h1 class="font-titulo text-4xl font-black">Programas</h1>
+    <p class="text-gris mt-3 max-w-2xl">
+      {/* TODO: filtros por año y por tema, y toggle grilla ↔ lista. */}
+      Archivo de emisiones. Acá van los filtros por año e invitado y el buscador.
+    </p>
+
+    <ul class="divide-humo border-humo mt-8 divide-y border-y">
+      {
+        emisiones.map((emision) => (
+          <li class="py-5">
+            <p class="text-gris text-xs tracking-widest uppercase">
+              <time datetime={emision.fecha}>
+                {formatoFecha.format(new Date(emision.fecha))}
+              </time>
+              {' · '}
+              {emision.duracion}
+            </p>
+            <h2 class="mt-1 text-lg font-semibold">{emision.titulo}</h2>
+            <p class="text-gris mt-1 text-sm">
+              {emision.piezas.length} piezas · {emision.invitados.join(', ')}
+            </p>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</Base>

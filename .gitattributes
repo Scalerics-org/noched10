@@ -1,0 +1,13 @@
+# Normaliza todo a LF en el repo y en el working tree.
+# Sin esto, Git en Windows convierte a CRLF al hacer checkout y Prettier
+# (que usa LF por defecto) marca el archivo entero como mal formateado.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.avif binary
+*.ico binary
+*.woff2 binary
+*.mp4 binary

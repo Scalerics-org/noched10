@@ -1,0 +1,15 @@
+{
+  // Worker de sólo assets: no hay código de servidor todavía.
+  "name": "noched10",
+  "compatibility_date": "2026-09-01",
+  // TODO: pegar el account_id de la cuenta de Scalerics antes del primer deploy.
+  // Sin esta línea, si wrangler está logueado con una cuenta personal el sitio
+  // del cliente queda fuera del control de la agencia.
+  "account_id": "<cuenta de Scalerics>",
+  "assets": {
+    "directory": "./dist",
+    // Sin barra final: /programas sirve directo, sin el 307.
+    "html_handling": "drop-trailing-slash",
+  },
+  "observability": { "enabled": true },
+}

@@ -1,0 +1,37 @@
+---
+import { navegacion, sitio } from '../datos/sitio';
+import { emision } from '../datos/programa';
+
+const rutaActual = Astro.url.pathname;
+---
+
+<header class="border-humo bg-negro/95 border-b backdrop-blur">
+  <!-- Franja de próxima emisión: es lo primero que alguien viene a buscar. -->
+  <div class="bg-rojo text-hueso text-center text-sm font-semibold tracking-wide">
+    <p class="px-4 py-2">
+      Nuevo programa todos los {emision.dia}
+      {emision.hora ? `a las ${emision.hora}` : ''}
+    </p>
+  </div>
+
+  <nav class="mx-auto flex max-w-6xl flex-wrap items-center gap-6 px-4 py-4">
+    <a href="/" class="font-titulo text-xl font-black tracking-tight">
+      {sitio.nombre}
+    </a>
+    <ul class="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+      {
+        navegacion.map((item) => (
+          <li>
+            <a
+              href={item.href}
+              aria-current={rutaActual === item.href ? 'page' : undefined}
+              class="text-gris hover:text-hueso aria-[current=page]:text-hueso transition-colors"
+            >
+              {item.texto}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+</header>

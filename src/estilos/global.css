@@ -1,0 +1,31 @@
+@import 'tailwindcss';
+
+/*
+  Tokens de marca D10. La paleta sale del escudo y de las placas de redes.
+  Todo color se define acá, en :root — nunca únicamente adentro de un media
+  query, porque entonces el tema claro queda sin definir.
+*/
+@theme {
+  --color-negro: #0a0a0a;
+  --color-carbon: #161616;
+  --color-humo: #2a2a2a;
+  --color-rojo: #c8102e;
+  --color-rojo-claro: #e63946;
+  --color-hueso: #f4f3ef;
+  --color-gris: #9a9a9a;
+
+  --font-titulo: 'Archivo', system-ui, sans-serif;
+  --font-texto: 'Inter', system-ui, sans-serif;
+}
+
+/* Respetar siempre la preferencia de movimiento reducido del sistema. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

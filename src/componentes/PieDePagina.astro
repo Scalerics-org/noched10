@@ -1,0 +1,46 @@
+---
+import { redes, sitio } from '../datos/sitio';
+import { plataformas } from '../datos/programa';
+
+const anio = new Date().getFullYear();
+---
+
+<footer class="border-humo bg-carbon border-t">
+  <div class="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-2">
+    <div>
+      <p class="font-titulo text-lg font-black">{sitio.nombre}</p>
+      <p class="text-gris mt-2 max-w-sm text-sm">{sitio.descripcion}</p>
+    </div>
+
+    <div class="grid gap-8 sm:grid-cols-2">
+      <div>
+        <h2 class="text-gris text-xs font-semibold tracking-widest uppercase">
+          Dónde vernos
+        </h2>
+        <ul class="mt-3 space-y-1 text-sm">
+          {plataformas.map((p) => <li>{p.nombre}</li>)}
+        </ul>
+      </div>
+      <div>
+        <h2 class="text-gris text-xs font-semibold tracking-widest uppercase">
+          Seguinos
+        </h2>
+        <ul class="mt-3 space-y-1 text-sm">
+          {
+            redes.map((red) => (
+              <li>
+                <a href={red.href} class="hover:text-rojo-claro" rel="noopener">
+                  {red.nombre}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="border-humo text-gris border-t px-4 py-4 text-center text-xs">
+    <p>© {anio} {sitio.nombre} · Producciones D10</p>
+  </div>
+</footer>

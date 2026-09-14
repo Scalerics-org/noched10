@@ -1,0 +1,23 @@
+# salida del build
+dist/
+# tipos generados
+.astro/
+
+# dependencias
+node_modules/
+
+# logs
+npm-debug.log*
+pnpm-debug.log*
+
+# variables de entorno
+.env
+.env.production
+.dev.vars
+
+# sistema operativo
+.DS_Store
+Thumbs.db
+
+# editores
+.idea/

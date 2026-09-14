@@ -1,0 +1,39 @@
+---
+import Base from '../layouts/Base.astro';
+import { emision, plataformas } from '../datos/programa';
+---
+
+<Base
+  titulo="Dónde vernos"
+  descripcion="Noche D10 en radio, televisión, cable del interior y streaming."
+>
+  <section class="mx-auto max-w-4xl px-4 py-12">
+    <h1 class="font-titulo text-4xl font-black">Dónde vernos y escucharnos</h1>
+    <p class="text-gris mt-3">
+      Programa {emision.frecuencia}, los {emision.dia}, de {emision.duracionAprox}.
+      {/* TODO: horario exacto pendiente de confirmar con el cliente. */}
+    </p>
+
+    <ul class="mt-8 space-y-4">
+      {
+        plataformas.map((plataforma) => (
+          <li class="border-humo bg-carbon border p-6">
+            <h2 class="text-lg font-semibold">{plataforma.nombre}</h2>
+            <p class="text-gris mt-1 text-sm">{plataforma.detalle}</p>
+            {plataforma.href && (
+              <p class="mt-3">
+                <a
+                  href={plataforma.href}
+                  rel="noopener"
+                  class="text-rojo-claro underline underline-offset-4"
+                >
+                  Ir a {plataforma.nombre}
+                </a>
+              </p>
+            )}
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</Base>
