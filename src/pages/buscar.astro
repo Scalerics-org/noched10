@@ -91,6 +91,15 @@ import Base from '../layouts/Base.astro';
     excerpt: string;
   };
 
+  /**
+   * Pagefind arma la URL desde el archivo (`invitados/x/index.html` →
+   * `/invitados/x/`), pero el sitio va sin barra final (`trailingSlash: 'never'`
+   * y `drop-trailing-slash` en Cloudflare). Sin esto cada resultado pasa por
+   * una redirección.
+   */
+  const sinBarraFinal = (url: string) =>
+    url.length > 1 ? url.replace(/\/+$/, '') : url;
+
   type IndicePagefind = {
     search: (
       consulta: string,
@@ -170,9 +179,9 @@ import Base from '../layouts/Base.astro';
           item.className = 'py-4';
 
           const enlace = document.createElement('a');
-          enlace.href = resultado.url;
+          enlace.href = sinBarraFinal(resultado.url);
           enlace.className = 'font-semibold hover:text-[var(--color-acento)]';
-          enlace.textContent = resultado.meta?.title ?? resultado.url;
+          enlace.textContent = resultado.meta?.title ?? sinBarraFinal(resultado.url);
 
           const extracto = document.createElement('p');
           extracto.className = 'mt-1 text-sm text-[var(--color-texto-suave)]';
