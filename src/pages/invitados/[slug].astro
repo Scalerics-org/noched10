@@ -1,0 +1,147 @@
+---
+/**
+ * Ficha de invitado.
+ *
+ * Es la página más valiosa del sitio para SEO: cada una de las 6.800 personas
+ * que pasaron por el estudio es una entidad con nombre propio que hoy no tiene
+ * dónde caer. Con el Person de schema.org y la lista de apariciones, el
+ * archivo empieza a traer tráfico de cola larga solo.
+ */
+import type { GetStaticPaths } from 'astro';
+import { getCollection, getEntry } from 'astro:content';
+
+import Base from '../../layouts/Base.astro';
+import TarjetaPieza from '../../componentes/TarjetaPieza.astro';
+import { nombresDeInvitados, piezasOrdenadas } from '../../datos/consultas';
+import { urlDeInvitado, urlDelArchivo } from '../../datos/archivo';
+import { persona } from '../../datos/esquemas';
+import { sitio } from '../../datos/sitio';
+import { enumerar, formatearFecha } from '../../datos/texto';
+
+export const getStaticPaths = (async () => {
+  const invitados = await getCollection('invitados');
+  return invitados.map((invitado) => ({
+    params: { slug: invitado.id },
+    props: { id: invitado.id },
+  }));
+}) satisfies GetStaticPaths;
+
+const { id } = Astro.props;
+
+const invitado = (await getEntry('invitados', id))!;
+const nombresDe = await nombresDeInvitados();
+
+const apariciones = (await piezasOrdenadas()).filter((pieza) =>
+  pieza.data.invitados.some((ref) => ref.id === id),
+);
+
+const fechas = apariciones.map((pieza) => pieza.data.emision.id);
+const descripcion =
+  `${invitado.data.nombre} en Noche D10: ` +
+  `${apariciones.length === 1 ? 'una aparición' : `${apariciones.length} apariciones`} ` +
+  `en el archivo del programa${fechas.length ? `, la última el ${formatearFecha(fechas[0])}` : ''}.`;
+
+const base = Astro.site ?? new URL(sitio.url);
+const grafo = [
+  persona(
+    {
+      nombre: invitado.data.nombre,
+      slug: invitado.data.slug,
+      rol: invitado.data.rol,
+      bio: invitado.data.bio,
+      apariciones: apariciones.map((pieza) => ({
+        titulo: pieza.data.titulo,
+        fecha: pieza.data.emision.id,
+      })),
+    },
+    base,
+  ),
+];
+---
+
+<Base
+  titulo={invitado.data.nombre}
+  descripcion={descripcion}
+  grafo={grafo}
+  migasDePan={[
+    { nombre: 'Invitados', ruta: '/invitados' },
+    { nombre: invitado.data.nombre, ruta: urlDeInvitado(invitado.data.nombre) },
+  ]}
+>
+  <article class="contenedor py-12">
+    {
+      invitado.data.rol && (
+        <p class="text-acento text-xs font-semibold tracking-widest uppercase">
+          {invitado.data.rol}
+        </p>
+      )
+    }
+
+    <h1
+      class="font-titulo mt-3 text-[length:var(--text-titulo)] leading-tight font-black"
+    >
+      {invitado.data.nombre}
+    </h1>
+
+    {
+      invitado.data.bio ? (
+        <p class="mt-4 max-w-2xl">{invitado.data.bio}</p>
+      ) : (
+        /* TODO: dato pendiente del cliente — bios de los invitados. */
+        <p class="text-texto-suave mt-4 max-w-2xl">{descripcion}</p>
+      )
+    }
+
+    {
+      invitado.data.temas.length > 0 && (
+        <p class="text-texto-suave mt-4 text-sm">
+          Temas:{' '}
+          {invitado.data.temas.map((tema, i) => (
+            <>
+              {i > 0 && ', '}
+              <a
+                href={urlDelArchivo({ tema })}
+                class="text-acento capitalize underline underline-offset-4"
+              >
+                {tema}
+              </a>
+            </>
+          ))}
+        </p>
+      )
+    }
+
+    <section class="mt-12" aria-labelledby="apariciones">
+      <h2
+        id="apariciones"
+        class="font-titulo text-[length:var(--text-grande)] font-black"
+      >
+        {
+          apariciones.length === 1
+            ? 'Su paso por Noche D10'
+            : 'Sus apariciones en Noche D10'
+        }
+      </h2>
+      <p class="text-texto-suave mt-2 text-sm">
+        {enumerar(fechas.map(formatearFecha))}
+      </p>
+
+      <ul class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {
+          apariciones.map((pieza) => (
+            <li class="relative">
+              <TarjetaPieza
+                titulo={pieza.data.titulo}
+                tipo={pieza.data.tipo}
+                duracion={pieza.data.duracion}
+                fecha={pieza.data.emision.id}
+                invitados={nombresDe(pieza.data.invitados)}
+                temas={pieza.data.temas}
+              />
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+  </article>
+</Base>
