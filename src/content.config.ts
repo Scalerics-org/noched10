@@ -52,7 +52,8 @@ const nombreDePieza: Record<string, string> = {
 const emisionesCollection = defineCollection({
   loader: desdeDatos('emisiones', () =>
     emisionesOrdenadas.map((emision) => ({
-      id: emision.fecha,
+      id: emision.slug,
+      slug: emision.slug,
       fecha: emision.fecha,
       numero: emision.numero,
       titulo: emision.titulo,
@@ -61,10 +62,17 @@ const emisionesCollection = defineCollection({
       invitados: emision.invitados.map(aSlug),
       descripcion:
         `Programa completo de Noche D10 del ${formatearFecha(emision.fecha)}, ` +
-        `de ${emision.duracion}, con ${enumerar(emision.invitados)}.`,
+        `de ${emision.duracion}` +
+        (emision.invitados.length > 0 ? `, con ${enumerar(emision.invitados)}.` : '.'),
     })),
   ),
   schema: z.object({
+    slug: z
+      .string()
+      .regex(
+        /^\d{4}-\d{2}-\d{2}(-\d+)?$/,
+        'El slug es la fecha, con sufijo si se repite',
+      ),
     fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha va en formato AAAA-MM-DD'),
     numero: z.number().int().positive().nullable(),
     titulo: z.string().min(1),
@@ -83,11 +91,14 @@ const piezasCollection = defineCollection({
       titulo: pieza.titulo,
       videoId: pieza.videoId,
       duracion: pieza.duracion,
-      emision: pieza.fecha,
+      emision: pieza.emision,
+      fecha: pieza.fecha,
       invitados: pieza.invitados.map(aSlug),
       temas: pieza.temas,
       resumen:
-        `${nombreDePieza[pieza.tipo]} con ${enumerar(pieza.invitados)} en Noche D10, ` +
+        `${nombreDePieza[pieza.tipo]}` +
+        (pieza.invitados.length > 0 ? ` con ${enumerar(pieza.invitados)}` : '') +
+        ` en Noche D10, ` +
         `emitida el ${formatearFecha(pieza.fecha)}. Duración: ${pieza.duracion}.`,
     })),
   ),
@@ -97,6 +108,7 @@ const piezasCollection = defineCollection({
     videoId: z.string().nullable(),
     duracion: z.string().regex(/^\d{1,2}:\d{2}(:\d{2})?$/, 'Duración en h:mm:ss'),
     emision: reference('emisiones'),
+    fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha va en formato AAAA-MM-DD'),
     invitados: z.array(reference('invitados')),
     temas: z.array(z.string()),
     resumen: z.string().min(1),

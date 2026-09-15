@@ -62,9 +62,24 @@ export function urlDelArchivo(filtro: Filtro = {}, pagina = 1): string {
   return ruta;
 }
 
-export const urlDeEmision = (emision: Pick<Emision, 'fecha'>) =>
-  `/programas/${emision.fecha}`;
-export const urlDePieza = (titulo: string) => `/entrevistas/${aSlug(titulo)}`;
+/**
+ * URL de un chip de filtro: combina lo que se elige con el filtro activo, salvo
+ * que esa combinación no tenga programas. Las vistas vacías no se pre-renderizan
+ * (con el histórico hay años sin un solo recorte de humor), así que el link
+ * tiraría 404: en ese caso lleva sólo a lo elegido.
+ */
+export function urlDelChip(eleccion: Filtro, activo: Filtro): string {
+  const combinado = { ...activo, ...eleccion };
+  return filtrar(combinado).length > 0
+    ? urlDelArchivo(combinado)
+    : urlDelArchivo(eleccion);
+}
+
+/** Usa el slug y no la fecha: dos programas pueden compartir el día. */
+export const urlDeEmision = (emision: Pick<Emision, 'slug'>) =>
+  `/programas/${emision.slug}`;
+/** El slug de la pieza lo arma src/datos/invitados.ts, único en todo el archivo. */
+export const urlDePieza = (slug: string) => `/entrevistas/${slug}`;
 export const urlDeInvitado = (nombre: string) => `/invitados/${aSlug(nombre)}`;
 
 export type Pagina<T> = {

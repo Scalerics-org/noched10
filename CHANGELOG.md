@@ -7,6 +7,20 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ### Agregado
 
+- Actualización automática desde YouTube: el ingestor trae el canal (RSS + YouTube Data
+  API), clasifica por duración, une el doble pase vivo/estreno en una sola emisión y
+  escribe `src/datos/feed.json`. GitHub Actions lo corre miércoles y viernes, commitea y
+  despliega en Cloudflare.
+- Carga del histórico completo: 228 emisiones de 2019 a 2026 con sus recortes.
+- `src/datos/curaduria.ts` para corregir a mano nombres, temas, fechas y agrupado.
+- Tests del dominio con `node --test` dentro de `npm run verify`.
+
+### Cambiado
+
+- Las emisiones ya no se cargan a mano: se derivan del feed. La URL de una emisión usa
+  su `slug` (la fecha, con sufijo si dos programas comparten el día) y los slugs de
+  pieza son únicos en todo el archivo.
+
 - Diseño de Claude Design implementado: sistema visual (Archivo, negro cálido, rojo D10,
   brasa, amarillo y cian), cabezal con cuenta regresiva, home con hero "placa de aire",
   archivo con índice y fichas de entrevista e invitado.

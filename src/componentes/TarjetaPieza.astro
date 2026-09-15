@@ -4,6 +4,7 @@ import { urlDePieza } from '../datos/archivo';
 import { formatearFecha } from '../datos/texto';
 
 type Props = {
+  slug: string;
   titulo: string;
   tipo: string;
   duracion: string;
@@ -21,7 +22,16 @@ const etiquetas: Record<string, string> = {
   musica: 'Música en vivo',
 };
 
-const { titulo, tipo, duracion, fecha, invitados, temas, nivel = 'h3' } = Astro.props;
+const {
+  slug,
+  titulo,
+  tipo,
+  duracion,
+  fecha,
+  invitados,
+  temas,
+  nivel = 'h3',
+} = Astro.props;
 const Titulo = nivel;
 ---
 
@@ -38,7 +48,7 @@ const Titulo = nivel;
 
   <Titulo class="mt-3 leading-snug font-semibold">
     <a
-      href={urlDePieza(titulo)}
+      href={urlDePieza(slug)}
       class="group-hover:text-acento transition-colors after:absolute after:inset-0"
     >
       {titulo}

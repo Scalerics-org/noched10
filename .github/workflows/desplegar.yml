@@ -1,0 +1,43 @@
+# Publica el sitio en Cloudflare Workers (cuenta Scalerics, fijada en
+# wrangler.jsonc). Corre con cada push a main y cuando lo llama traer-feed.yml.
+#
+# Secreto del repo: CLOUDFLARE_API_TOKEN, con permiso "Workers Scripts: Edit"
+# sobre la cuenta de Scalerics.
+name: Desplegar en Cloudflare
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desplegar
+  cancel-in-progress: true
+
+jobs:
+  desplegar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Llamado desde traer-feed, tiene que tomar el commit del bot, no el
+          # que disparó el workflow.
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Publicar
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

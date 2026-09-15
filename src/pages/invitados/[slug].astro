@@ -55,7 +55,7 @@ type Fila = {
 
 const filas: Fila[] = [
   ...apariciones.map((pieza) => ({
-    fecha: pieza.data.emision.id,
+    fecha: pieza.data.fecha,
     titulo: pieza.data.titulo,
     tipo: etiquetas[pieza.data.tipo] ?? pieza.data.tipo,
     tema: pieza.data.temas[0] ? mayuscula(pieza.data.temas[0]) : '',
@@ -102,8 +102,9 @@ const grafo = [
       rol: invitado.data.rol,
       bio: invitado.data.bio,
       apariciones: apariciones.map((pieza) => ({
+        slug: pieza.id,
         titulo: pieza.data.titulo,
-        fecha: pieza.data.emision.id,
+        fecha: pieza.data.fecha,
       })),
     },
     base,

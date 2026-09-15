@@ -11,6 +11,7 @@ import { urlDeEmision } from '../datos/archivo';
 import { fechaConPuntos } from '../datos/texto';
 
 type Props = {
+  slug: string;
   fecha: string;
   titulo: string;
   duracion: string;
@@ -20,7 +21,7 @@ type Props = {
   videoId: string | null;
 };
 
-const { fecha, titulo, duracion, invitados, cantidadDePiezas, temas, videoId } =
+const { slug, fecha, titulo, duracion, invitados, cantidadDePiezas, temas, videoId } =
   Astro.props;
 
 const tema = temas.map((t) => t.charAt(0).toUpperCase() + t.slice(1)).join(' · ');
@@ -64,7 +65,7 @@ const tema = temas.map((t) => t.charAt(0).toUpperCase() + t.slice(1)).join(' · 
     <h2
       class="text-base leading-[1.2] font-extrabold group-data-[vista=grilla]:order-2 group-data-[vista=grilla]:mb-1.5 lg:text-lg group-data-[vista=grilla]:lg:text-[1.05rem]"
     >
-      <a href={urlDeEmision({ fecha })} class="after:absolute after:inset-0">
+      <a href={urlDeEmision({ slug })} class="after:absolute after:inset-0">
         {titulo}
       </a>
       <span
