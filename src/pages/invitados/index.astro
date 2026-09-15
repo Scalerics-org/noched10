@@ -1,87 +1,341 @@
 ---
-/** Índice de invitados, agrupado por inicial para poder recorrerlo. */
+/**
+ * Índice de invitados (diseño 3a desktop / 3b mobile).
+ *
+ * Junta dos fuentes: el índice del canal (indice-invitados.ts, con cuántos
+ * videos tiene cada nombre) y la colección `invitados` (los que ya tienen
+ * ficha en el sitio). Quien tiene ficha lleva link; el resto se lista igual,
+ * porque el índice es justamente para encontrar a alguien.
+ *
+ * Buscador y "Sólo los que volvieron" filtran en el cliente. Sin JavaScript
+ * se ve el índice completo y el buscador manda a /buscar, que es un form real.
+ */
 import Base from '../../layouts/Base.astro';
 import { invitadosOrdenados } from '../../datos/consultas';
-import { urlDeInvitado } from '../../datos/archivo';
+import { indiceDeInvitados } from '../../datos/indice-invitados';
 import { programa } from '../../datos/programa';
+import { aSlug } from '../../datos/texto';
 
-const invitados = await invitadosOrdenados();
+type Entrada = { nombre: string; videos: number; href: string | null };
 
-const porInicial = new Map<string, typeof invitados>();
-for (const invitado of invitados) {
-  // La inicial se saca del nombre normalizado: si no, 'Á' y 'A' caen en
-  // grupos distintos y el índice queda con dos letras A.
-  const inicial = invitado.data.nombre
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')[0]
-    .toUpperCase();
-  porInicial.set(inicial, [...(porInicial.get(inicial) ?? []), invitado]);
+/** Nombres del canal que en el sitio tienen otra forma. Clave: slug del canal. */
+const ALIAS: Record<string, string> = {
+  'susana-andrade': 'mae-susana-andrade',
+};
+
+const conFicha = await invitadosOrdenados();
+const fichas = new Map(conFicha.map((i) => [i.id, i]));
+
+const entradas: Entrada[] = indiceDeInvitados.map(([nombre, videos]) => {
+  const slug = ALIAS[aSlug(nombre)] ?? aSlug(nombre);
+  return { nombre, videos, href: fichas.has(slug) ? `/invitados/${slug}` : null };
+});
+
+// Los que tienen ficha pero no figuran en el índice del canal, también entran.
+const enElIndice = new Set(entradas.flatMap((e) => (e.href ? [e.href] : [])));
+for (const invitado of conFicha) {
+  const href = `/invitados/${invitado.id}`;
+  if (!enElIndice.has(href)) {
+    entradas.push({
+      nombre: invitado.data.nombre,
+      videos: invitado.data.apariciones,
+      href,
+    });
+  }
 }
-const grupos = [...porInicial.entries()].sort((a, b) => a[0].localeCompare(b[0], 'es'));
+
+/** Sin comillas ni tildes: para ordenar, agrupar y buscar. */
+const clave = (nombre: string) =>
+  nombre
+    .replace(/^["'“”]+/, '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '');
+
+entradas.sort((a, b) => clave(a.nombre).localeCompare(clave(b.nombre), 'es'));
+
+const grupos = new Map<string, Entrada[]>();
+for (const entrada of entradas) {
+  const letra = clave(entrada.nombre).charAt(0).toUpperCase();
+  grupos.set(letra, [...(grupos.get(letra) ?? []), entrada]);
+}
+
+const recurrentes = [...entradas]
+  .sort((a, b) => b.videos - a.videos || a.nombre.localeCompare(b.nombre, 'es'))
+  .slice(0, 12);
+
+const total = entradas.length;
+const nombreDe = (e: Entrada) => e.nombre.replace(/"([^"]+)"/g, '“$1”');
 ---
 
 <Base
   titulo="Invitados"
-  descripcion={`Las personas que pasaron por Noche D10. Más de ${programa.invitadosAprox.toLocaleString('es-UY')} invitados en ${programa.aniosAlAire} años.`}
+  descripcion={`Índice de invitados de Noche D10: ${total} nombres con video publicado, de los más de ${programa.invitadosAprox.toLocaleString('es-UY')} que pasaron por el programa.`}
   migasDePan={[{ nombre: 'Invitados', ruta: '/invitados' }]}
   buscable={false}
 >
-  <div class="contenedor py-12">
-    <h1 class="font-titulo text-[length:var(--text-titulo)] font-black">Invitados</h1>
-    <p class="text-texto-suave mt-3 max-w-2xl">
-      {
-        /*
-        "Casi 6.877 invitados" es el número que dio la prensa y es
-        sospechosamente preciso. Hasta que el cliente lo confirme se muestra
-        redondeado para abajo.
-        TODO: dato pendiente del cliente — el total real de invitados.
-      */
-      }
-      Por el estudio pasaron más de {programa.invitadosAprox.toLocaleString('es-UY')}
-      personas en {programa.aniosAlAire} años. Estas son las que ya están cargadas en el archivo
-      del sitio.
-    </p>
-
-    <nav class="mt-8 flex flex-wrap gap-2" aria-label="Saltar a una letra">
-      {
-        grupos.map(([inicial]) => (
-          <a
-            href={`#letra-${inicial}`}
-            class="border-borde hover:border-acento hover:text-acento block border px-3 py-1.5 text-sm transition-colors"
+  <section class="bg-fondo border-borde border-b" data-indice-invitados>
+    <div class="contenedor pt-5.5 pb-4.5 lg:pt-11 lg:pb-7.5">
+      <div
+        class="mb-4 flex flex-wrap items-end justify-between gap-x-10 gap-y-2.5 lg:mb-6.5"
+      >
+        <div>
+          <p
+            class="etiqueta text-acento mb-3.5 hidden text-[0.7rem] tracking-[0.2em] lg:block"
           >
-            {inicial}
-          </a>
+            Índice del archivo
+          </p>
+          <h1 class="placa text-[2.5rem] lg:text-[4.75rem]">Los invitados</h1>
+        </div>
+        {
+          /*
+          TODO: dato pendiente del cliente — el total real de invitados. "6.800"
+          es el número de prensa redondeado para abajo.
+        */
+        }
+        <p class="text-texto-suave max-w-[36ch] text-[0.8rem] lg:text-[0.875rem]">
+          {total} nombres con video publicado<span class="hidden lg:inline"
+            >{
+              `, de los más de ${programa.invitadosAprox.toLocaleString('es-UY')} que pasaron por el programa en dieciséis años`
+            }</span
+          >. El número es en cuántos videos aparece cada uno.
+        </p>
+      </div>
+
+      <form
+        action="/buscar"
+        method="get"
+        role="search"
+        class="bg-superficie border-borde mb-3 flex min-h-13 items-center border lg:mb-5 lg:min-h-17"
+      >
+        <svg
+          class="text-gris mx-3.5 h-5 w-5 shrink-0 lg:mx-4.5 lg:h-5.5 lg:w-5.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path>
+        </svg>
+        <label for="q-invitados" class="sr-only">Buscar un invitado por nombre</label>
+        <input
+          id="q-invitados"
+          type="search"
+          name="q"
+          autocomplete="off"
+          placeholder="Buscá a cualquiera de los 6.800 invitados"
+          class="text-texto placeholder:text-texto-tenue min-w-0 flex-1 bg-transparent py-3 text-[0.95rem] lg:text-[1.2rem]"
+          data-busqueda
+        />
+        <button
+          type="reset"
+          class="etiqueta text-texto-suave hover:text-texto border-borde hidden self-stretch border-l px-5.5 text-[0.72rem] tracking-[0.12em] lg:block"
+          data-limpiar
+        >
+          Limpiar
+        </button>
+      </form>
+
+      <div class="flex flex-wrap items-center gap-3 lg:gap-4.5">
+        <button
+          type="button"
+          class="chip min-h-12 flex-1 justify-center lg:min-h-11 lg:flex-none"
+          aria-pressed="false"
+          data-repetidores
+          hidden
+        >
+          Sólo los que volvieron
+        </button>
+        <p class="ml-auto flex shrink-0 items-baseline gap-2.5" role="status">
+          <span class="dato text-xl lg:text-[1.625rem]" data-cuenta>{total}</span>
+          <span class="etiqueta text-texto-suave text-[0.62rem] lg:text-[0.68rem]">
+            nombres<span class="hidden lg:inline"> en el índice</span>
+          </span>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section
+    class="bg-banda border-borde hidden border-b lg:block"
+    aria-labelledby="recurrentes"
+    data-recurrentes
+  >
+    <div class="contenedor py-7.5">
+      <h2
+        id="recurrentes"
+        class="etiqueta text-texto-tenue mb-4.5 text-[0.66rem] tracking-[0.18em]"
+      >
+        Los que más volvieron
+      </h2>
+      <ol class="border-borde bg-borde flex flex-wrap gap-0.5 border">
+        {
+          recurrentes.map((r) => (
+            <li class="bg-fondo hover:bg-superficie relative flex-[1_1_9.4rem] px-4 pt-4 pb-3.5 transition-colors">
+              <p class="dato text-rojo-claro mb-2 text-[2.5rem] leading-[0.9]">
+                {r.videos}
+              </p>
+              <p class="text-[0.875rem] leading-[1.2] font-extrabold">
+                {r.href ? (
+                  <a href={r.href} class="after:absolute after:inset-0">
+                    {nombreDe(r)}
+                  </a>
+                ) : (
+                  nombreDe(r)
+                )}
+              </p>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  <div class="bg-fondo">
+    <div class="contenedor pb-8 lg:pt-2.5 lg:pb-14">
+      {
+        [...grupos.entries()].map(([letra, delGrupo]) => (
+          <section
+            class="border-borde pt-4.5 pb-1.5 lg:grid lg:grid-cols-[5.75rem_1fr] lg:items-start lg:gap-7 lg:border-b lg:pt-6.5 lg:pb-5.5"
+            aria-labelledby={`letra-${letra}`}
+            data-grupo
+          >
+            <h2
+              id={`letra-${letra}`}
+              class="dato text-rojo border-regla mb-1 border-b-2 pb-2 text-[2.125rem] leading-none lg:sticky lg:top-40 lg:mb-0 lg:border-b-0 lg:pb-0 lg:text-[3.875rem] lg:leading-[0.82]"
+            >
+              {letra}
+            </h2>
+            <ul class="lg:flex lg:flex-wrap lg:gap-x-6.5 lg:gap-y-1.5">
+              {delGrupo.map((entrada) => (
+                <li
+                  class="border-borde flex min-h-12 items-baseline justify-between gap-3 border-b px-0.5 py-3 lg:inline-flex lg:min-h-0 lg:justify-start lg:gap-1.5 lg:border-b-0 lg:px-0 lg:py-1.25"
+                  data-nombre={clave(entrada.nombre).toLowerCase()}
+                  data-videos={entrada.videos}
+                >
+                  {entrada.href ? (
+                    <a
+                      href={entrada.href}
+                      class="hover:text-acento text-[1.0625rem] leading-[1.25] font-extrabold transition-colors lg:text-xl"
+                    >
+                      {nombreDe(entrada)}
+                    </a>
+                  ) : (
+                    <span class="text-[1.0625rem] leading-[1.25] font-extrabold lg:text-xl">
+                      {nombreDe(entrada)}
+                    </span>
+                  )}
+                  <span class="text-texto-tenue shrink-0 font-mono text-xs font-bold">
+                    <span class="sr-only">en</span> {entrada.videos}
+                    <span class="sr-only">
+                      {entrada.videos === 1 ? 'video' : 'videos'}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
         ))
       }
-    </nav>
 
-    {
-      grupos.map(([inicial, delGrupo]) => (
-        <section class="mt-10" aria-labelledby={`letra-${inicial}`}>
-          <h2
-            id={`letra-${inicial}`}
-            class="font-titulo text-acento border-borde border-b pb-2 text-2xl font-black"
+      <div class="py-13 text-center lg:py-20" data-sin-resultados hidden>
+        <p class="titulo-seccion mb-3 text-[1.75rem] lg:mb-3.5 lg:text-[2.375rem]">
+          Nadie con ese nombre
+        </p>
+        <p class="text-texto-suave mb-4.5 text-[0.85rem] lg:mb-5.5 lg:text-[0.9rem]">
+          Probá con el apellido solo.<span class="hidden lg:inline">
+            Y si estuvo en el programa pero no está acá, escribinos: el archivo se sigue
+            cargando.</span
           >
-            {inicial}
-          </h2>
-          <ul class="mt-4 grid gap-x-6 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
-            {delGrupo.map((invitado) => (
-              <li>
-                <a
-                  href={urlDeInvitado(invitado.data.nombre)}
-                  class="hover:text-acento transition-colors"
-                >
-                  {invitado.data.nombre}
-                  <span class="text-texto-suave text-sm">
-                    {' '}
-                    ({invitado.data.apariciones})
-                  </span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))
-    }
+        </p>
+        <button type="button" class="boton boton-primario" data-limpiar
+          >Ver el índice completo</button
+        >
+      </div>
+    </div>
   </div>
+
+  <section
+    class="bg-banda border-borde hidden border-t lg:block"
+    aria-labelledby="no-te-encontras"
+  >
+    <div class="contenedor flex items-center gap-7.5 py-8.5">
+      <div class="flex-1">
+        <h2 id="no-te-encontras" class="titulo-seccion mb-2 text-[1.875rem]">
+          ¿Estuviste en el programa y no te encontrás?
+        </h2>
+        <p class="text-texto-suave text-[0.85rem]">
+          El índice arranca por los videos publicados. Dieciséis años de cintas se
+          siguen cargando.
+        </p>
+      </div>
+      <a href="/contacto" class="boton boton-borde min-h-13 shrink-0">Escribinos</a>
+    </div>
+  </section>
 </Base>
+
+<script>
+  /**
+   * Filtro en vivo del índice. Trabaja sobre el HTML que ya pintó el servidor:
+   * sólo prende y apaga [hidden], nunca re-renderiza.
+   */
+  const raiz = document.querySelector<HTMLElement>('[data-indice-invitados]');
+  const entrada = document.querySelector<HTMLInputElement>('[data-busqueda]');
+  const repetidores = document.querySelector<HTMLButtonElement>('[data-repetidores]');
+  const cuenta = document.querySelector<HTMLElement>('[data-cuenta]');
+  const vacio = document.querySelector<HTMLElement>('[data-sin-resultados]');
+  const destacados = document.querySelector<HTMLElement>('[data-recurrentes]');
+  const grupos = [...document.querySelectorAll<HTMLElement>('[data-grupo]')];
+
+  if (raiz && entrada && repetidores && cuenta && vacio) {
+    const normalizar = (texto: string) =>
+      texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+
+    function filtrar() {
+      const consulta = normalizar(entrada!.value);
+      const soloRepetidores = repetidores!.getAttribute('aria-pressed') === 'true';
+      let visibles = 0;
+
+      for (const grupo of grupos) {
+        let enGrupo = 0;
+        for (const fila of grupo.querySelectorAll<HTMLElement>('[data-nombre]')) {
+          const pasa =
+            (!consulta || (fila.dataset.nombre ?? '').includes(consulta)) &&
+            (!soloRepetidores || Number(fila.dataset.videos) > 1);
+          fila.hidden = !pasa;
+          if (pasa) enGrupo++;
+        }
+        grupo.hidden = enGrupo === 0;
+        visibles += enGrupo;
+      }
+
+      cuenta!.textContent = String(visibles);
+      vacio!.hidden = visibles > 0;
+      // Mientras se filtra, "los que más volvieron" distrae del resultado.
+      if (destacados) destacados.hidden = Boolean(consulta);
+    }
+
+    function limpiar() {
+      entrada!.value = '';
+      repetidores!.setAttribute('aria-pressed', 'false');
+      filtrar();
+      entrada!.focus();
+    }
+
+    // Con JS la búsqueda es en vivo y el Enter no navega.
+    entrada.form?.addEventListener('submit', (evento) => evento.preventDefault());
+    entrada.addEventListener('input', filtrar);
+    repetidores.hidden = false;
+    repetidores.addEventListener('click', () => {
+      const activo = repetidores.getAttribute('aria-pressed') === 'true';
+      repetidores.setAttribute('aria-pressed', String(!activo));
+      filtrar();
+    });
+    document.querySelectorAll('[data-limpiar]').forEach((boton) =>
+      boton.addEventListener('click', (evento) => {
+        evento.preventDefault();
+        limpiar();
+      }),
+    );
+  }
+</script>
