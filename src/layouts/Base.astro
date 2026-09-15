@@ -86,7 +86,16 @@ const grafoCompleto = [
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/icono-180.png" />
     <link rel="manifest" href="/manifiesto.webmanifest" />
-    <meta name="theme-color" content="#0a0a0a" />
+    <meta name="theme-color" content="#0b0a09" />
+
+    {/* Una sola fuente, en el mismo origen: se precarga para que no haya salto. */}
+    <link
+      rel="preload"
+      href="/fuentes/archivo-d10.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
 
     <link
       rel="alternate"

@@ -28,9 +28,27 @@ export async function piezasOrdenadas(): Promise<Pieza[]> {
   return piezas.sort((a, b) => b.data.emision.id.localeCompare(a.data.emision.id));
 }
 
+/** Orden de lectura dentro de una emisión: entrevistas, música, columna y humor al cierre. */
+const ORDEN_DE_TIPO = ['entrevista', 'musica', 'columna', 'humor'];
+
 export async function piezasDe(emision: Emision | string): Promise<Pieza[]> {
   const id = typeof emision === 'string' ? emision : emision.id;
-  return (await piezasOrdenadas()).filter((pieza) => pieza.data.emision.id === id);
+  const deLaEmision = (await piezasOrdenadas()).filter(
+    (pieza) => pieza.data.emision.id === id,
+  );
+  // Dentro de cada tipo manda el orden de invitados de la emisión, que es el
+  // orden en que salieron al aire.
+  const invitadosEnOrden =
+    typeof emision === 'string' ? [] : emision.data.invitados.map((ref) => ref.id);
+  const posicion = (pieza: Pieza) => {
+    const i = invitadosEnOrden.indexOf(pieza.data.invitados[0]?.id ?? '');
+    return i === -1 ? Number.MAX_SAFE_INTEGER : i;
+  };
+  return deLaEmision.sort(
+    (a, b) =>
+      ORDEN_DE_TIPO.indexOf(a.data.tipo) - ORDEN_DE_TIPO.indexOf(b.data.tipo) ||
+      posicion(a) - posicion(b),
+  );
 }
 
 /**

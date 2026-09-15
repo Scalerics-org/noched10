@@ -1,64 +1,146 @@
 ---
-import { navegacion, sitio } from '../datos/sitio';
-import { textoDeEmision } from '../datos/esquemas';
+/**
+ * Cabezal fijo: navegación + barra de próxima emisión (diseño 1e / 1f).
+ *
+ * Van juntos y pegados arriba porque es lo primero que alguien viene a buscar:
+ * cuándo sale el programa y por dónde verlo.
+ *
+ * "16 años" está en el diseño pero la página todavía no existe: no se pone un
+ * link roto en todas las páginas del sitio.
+ * TODO: dato pendiente del cliente — material de los 16 años.
+ */
+import { Image } from 'astro:assets';
+import escudo from '../assets/marca/escudo-d10.jpg';
+import { navegacion } from '../datos/sitio';
+import BarraDeEmision from './BarraDeEmision.astro';
 import CambioDeTema from './CambioDeTema.astro';
 
 const rutaActual = Astro.url.pathname;
 const activo = (href: string) =>
   href === '/' ? rutaActual === '/' : rutaActual.startsWith(href);
+
+const lupa = 'M20 20l-3.5-3.5';
 ---
 
-{
-  /*
-  Barra fija de próxima emisión. Va arriba de todo y pegada porque es lo
-  primero que alguien viene a buscar: cuándo sale el programa.
-*/
-}
-<div
-  class="bg-acento-fuerte text-sobre-acento sticky top-0 z-40 text-center text-sm font-semibold tracking-wide"
->
-  <p class="px-4 py-2">
-    {textoDeEmision()} ·{' '}
-    <a href="/donde-vernos" class="underline underline-offset-4">Dónde vernos</a>
-  </p>
-</div>
-
-<header class="border-borde bg-fondo/95 sticky top-9 z-30 border-b backdrop-blur">
-  <nav
-    class="contenedor flex flex-wrap items-center gap-x-6 gap-y-3 py-3"
-    aria-label="Principal"
-  >
-    <a href="/" class="font-titulo mr-auto text-xl font-black tracking-tight">
-      <span class="text-acento">Noche</span> D10
-      <span class="sr-only">— inicio</span>
-    </a>
-
-    <ul
-      class="order-3 flex w-full flex-wrap gap-x-5 gap-y-2 text-sm lg:order-none lg:w-auto"
+<header class="sticky top-0 z-40" data-pagefind-ignore>
+  <div class="bg-fondo border-borde border-b">
+    <nav
+      class="contenedor flex h-14 items-center gap-4 lg:h-15 lg:gap-6"
+      aria-label="Principal"
     >
+      <a href="/" class="flex shrink-0 items-center gap-3">
+        <Image
+          src={escudo}
+          alt=""
+          width={40}
+          height={40}
+          densities={[1, 2]}
+          loading="eager"
+          class="h-9 w-9 object-cover lg:h-10 lg:w-10"
+        />
+        <span class="placa text-lg lg:hidden" aria-hidden="true">Noche D10</span>
+        <span class="sr-only">Noche D10, inicio</span>
+      </a>
+
+      <ul class="mr-auto hidden gap-7 lg:flex">
+        {
+          navegacion.map((item) => (
+            <li>
+              <a
+                href={item.href}
+                aria-current={activo(item.href) ? 'page' : undefined}
+                class="etiqueta text-texto-suave hover:text-texto aria-[current=page]:text-texto aria-[current=page]:border-acento-fuerte border-b-2 border-transparent pb-1 text-[0.78rem] tracking-[0.12em] transition-colors"
+              >
+                {item.texto}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+
+      <a
+        href="/buscar"
+        class="etiqueta text-acento hover:text-texto ml-auto hidden items-center gap-2 text-[0.78rem] tracking-[0.12em] transition-colors lg:ml-0 lg:inline-flex"
+      >
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d={lupa}></path>
+        </svg>
+        Buscar
+      </a>
+
+      <a
+        href="/buscar"
+        class="text-texto ml-auto grid h-11 w-11 place-items-center lg:hidden"
+        aria-label="Buscar en el archivo"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d={lupa}></path>
+        </svg>
+      </a>
+
+      <CambioDeTema />
+
       {
-        navegacion.map((item) => (
-          <li>
-            <a
-              href={item.href}
-              aria-current={activo(item.href) ? 'page' : undefined}
-              class="text-texto-suave hover:text-texto aria-[current=page]:text-texto aria-[current=page]:decoration-acento transition-colors aria-[current=page]:underline aria-[current=page]:decoration-2 aria-[current=page]:underline-offset-8"
-            >
-              {item.texto}
-            </a>
-          </li>
-        ))
+        /*
+        Menú mobile con <details>: abre y cierra sin JavaScript y el navegador
+        ya le da el rol y el estado expandido a los lectores de pantalla.
+      */
       }
-    </ul>
+      <details class="group relative lg:hidden">
+        <summary
+          class="text-texto grid h-11 w-11 cursor-pointer list-none place-items-center [&::-webkit-details-marker]:hidden"
+        >
+          <span class="sr-only">Menú</span>
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path d="M4 7h16M4 12h16M4 17h16"></path>
+          </svg>
+        </summary>
+        <ul
+          class="bg-fondo border-borde absolute top-full right-0 mt-2 w-64 border-x border-t-2 border-b border-t-[var(--color-acento-fuerte)]"
+        >
+          {
+            navegacion.map((item) => (
+              <li class="border-borde border-b last:border-b-0">
+                <a
+                  href={item.href}
+                  aria-current={activo(item.href) ? 'page' : undefined}
+                  class="etiqueta text-texto-suave aria-[current=page]:text-acento flex min-h-12 items-center px-4 text-[0.8rem]"
+                >
+                  {item.texto}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </details>
+    </nav>
+  </div>
 
-    <a
-      href="/buscar"
-      class="text-texto-suave hover:text-texto text-sm transition-colors"
-      aria-label="Buscar en el archivo"
-    >
-      Buscar
-    </a>
-    <CambioDeTema />
-  </nav>
-  <span class="sr-only">{sitio.nombre}</span>
+  <BarraDeEmision />
 </header>

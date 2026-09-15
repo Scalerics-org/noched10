@@ -1,25 +1,101 @@
 ---
-import { emisionesOrdenadas, nombresDeInvitados, piezasDe } from '../datos/consultas';
+/**
+ * Home (diseño 1e desktop / 1f mobile, con el hero 1d "placa de aire").
+ *
+ * Orden del brief: barra de próxima emisión (en el cabezal) / hero del último
+ * programa / franja de números / 3 entrevistas destacadas / humor / buscador /
+ * dónde vernos / anunciantes / pie.
+ */
+import { Image } from 'astro:assets';
+import escudo from '../assets/marca/escudo-d10.jpg';
+import marRepuestos from '../assets/marca/anunciante-mar-repuestos.jpg';
 
 import Base from '../layouts/Base.astro';
 import FachadaYoutube from '../componentes/FachadaYoutube.astro';
-import TarjetaPieza from '../componentes/TarjetaPieza.astro';
-import { sitio } from '../datos/sitio';
-import { plataformas, trayectoria } from '../datos/programa';
-import { argumentos } from '../datos/anunciantes';
+import { emisionesOrdenadas, nombresDeInvitados, piezasDe } from '../datos/consultas';
+import { sitio, redes } from '../datos/sitio';
+import { plataformas } from '../datos/programa';
 import { urlDeEmision } from '../datos/archivo';
 import { episodio } from '../datos/esquemas';
-import { formatearFecha } from '../datos/texto';
+import { fechaConPuntos, formatearFecha } from '../datos/texto';
+import {
+  accionesDePlataforma,
+  barrasDeTrayectoria,
+  buscadosEstaSemana,
+  franjaDeNumeros,
+  humoradas,
+  numeroDeLaUltimaEmision,
+} from '../datos/maqueta';
 
 const emisiones = await emisionesOrdenadas();
 const ultima = emisiones[0];
-
 const deLaUltima = await piezasDe(ultima);
-const destacadas = deLaUltima.filter((p) => p.data.tipo === 'entrevista').slice(0, 3);
-const humor = deLaUltima.find((p) => p.data.tipo === 'humor');
+// Piezas en orden de aire: emisión más nueva primero y, adentro, el orden de piezasDe.
+const todas = (await Promise.all(emisiones.map((e) => piezasDe(e)))).flat();
+
+const destacadas = todas.filter((p) => p.data.tipo === 'entrevista').slice(0, 3);
+const ultimasHumoradas = todas.filter((p) => p.data.tipo === 'humor').slice(0, 3);
 
 const nombresDe = await nombresDeInvitados();
 const nombresDeLaUltima = nombresDe(ultima.data.invitados);
+
+/** "Sergio Secinaro" → "Secinaro": la placa del hero va por apellido. */
+const apellido = (nombre: string) => nombre.split(' ').at(-1) ?? nombre;
+const apellidos = nombresDeLaUltima.map(apellido).join(' · ');
+
+const [, mes, dia] = ultima.data.fecha.split('-');
+const fechaDePlaca = `${dia}.${mes}`;
+const spotify = redes.find((r) => r.nombre === 'Spotify')?.href;
+
+const etiquetaDe: Record<string, string> = {
+  entrevista: 'Entrevista',
+  humor: 'Humor',
+  columna: 'Columna',
+  musica: 'Música en vivo',
+};
+const temaDe = (temas: string[]) =>
+  temas[0] ? temas[0].charAt(0).toUpperCase() + temas[0].slice(1) : '';
+
+/** El ecualizador del hero: duración y retraso de cada barra, como en 1d. */
+const barrasDelEcualizador = [
+  [1.1, -0.1, 'rojo'],
+  [0.9, -0.5, 'vivo'],
+  [1.4, -0.2, 'brasa'],
+  [1, -0.8, 'rojo'],
+  [1.25, -0.3, 'vivo'],
+  [0.85, -0.65, 'brasa'],
+  [1.15, -0.45, 'rojo'],
+  [1.35, -0.15, 'vivo'],
+  [0.95, -0.75, 'brasa'],
+  [1.2, -0.35, 'rojo'],
+  [1.05, -0.55, 'vivo'],
+  [1.3, -0.25, 'brasa'],
+  [1.45, -0.7, 'rojo'],
+  [0.92, -0.4, 'vivo'],
+] as const;
+const colorDeBarra = { rojo: 'bg-rojo', vivo: 'bg-rojo-claro', brasa: 'bg-brasa' };
+
+const colorDeTrayectoria = (i: number) =>
+  i < 6
+    ? 'bg-superficie-alta'
+    : i < 9
+      ? 'bg-borde'
+      : i < 12
+        ? 'bg-rojo'
+        : i < 15
+          ? 'bg-rojo-claro'
+          : 'bg-brasa';
+
+const iconos: Record<string, string> = {
+  radio:
+    '<path d="M4.9 19.1A10 10 0 0 1 4.9 4.9"/><path d="M7.8 16.2a6 6 0 0 1 0-8.4"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4"/><path d="M19.1 4.9a10 10 0 0 1 0 14.2"/>',
+  television: '<rect x="2" y="7" width="20" height="14"/><path d="m7 2 5 5 5-5"/>',
+  cable:
+    '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18"/>',
+  streaming: '<rect x="2" y="5" width="20" height="14"/><path d="m10 9 5 3-5 3z"/>',
+};
+const iconoDe = (p: (typeof plataformas)[number]) =>
+  p.nombre.startsWith('Canales') ? iconos.cable : iconos[p.tipo];
 
 const base = Astro.site ?? new URL(sitio.url);
 const grafo = [
@@ -36,220 +112,544 @@ const grafo = [
     base,
   ),
 ];
+
+const encabezadoDeSeccion =
+  'border-regla mb-7 flex flex-wrap items-end justify-between gap-4 border-b-2 pb-4';
 ---
 
 <Base titulo="Inicio" grafo={grafo}>
-  {
-    /*
-    Hero del último programa. La miniatura es el elemento LCP: por eso va con
-    fetchpriority alta y sin diferir, y por eso el video no arranca solo.
-  */
-  }
-  <section class="contenedor py-12 lg:py-16">
-    <p class="text-acento text-xs font-semibold tracking-widest uppercase">
-      Último programa · <time datetime={ultima.data.fecha}>
-        {formatearFecha(ultima.data.fecha)}
-      </time>
-    </p>
-
-    <h1
-      class="font-titulo mt-3 max-w-4xl text-[length:var(--text-titulo)] leading-[1.05] font-black"
+  {/* ——— Hero 1d: placa de aire ——— */}
+  <section
+    aria-labelledby="ultimo-programa"
+    class="text-hueso bg-[radial-gradient(130%_80%_at_20%_14%,#2a1210_0%,#120e0d_50%,#0b0a09_100%)]"
+  >
+    <div
+      class="contenedor grid gap-6 pt-7 pb-8 lg:grid-cols-[1fr_26.25rem] lg:gap-13 lg:pt-14 lg:pb-12"
     >
-      {ultima.data.titulo}
-    </h1>
-
-    <p class="text-texto-suave mt-4 max-w-2xl">{ultima.data.descripcion}</p>
-
-    <div class="mt-8 max-w-4xl">
-      <FachadaYoutube
-        videoId={ultima.data.videoId}
-        titulo={ultima.data.titulo}
-        prioridad
-      />
-    </div>
-
-    <p class="mt-6 flex flex-wrap gap-3">
-      <a
-        href={urlDeEmision(ultima.data)}
-        class="bg-acento-fuerte text-sobre-acento px-5 py-3 text-sm font-semibold hover:opacity-90"
-      >
-        Ver el programa completo
-      </a>
-      <a
-        href="/programas"
-        class="border-borde hover:border-acento border px-5 py-3 text-sm font-semibold"
-      >
-        Todo el archivo
-      </a>
-    </p>
-  </section>
-
-  {/* Franja de números: es el activo narrativo más fuerte que tiene la marca. */}
-  <section class="border-borde bg-superficie border-y" aria-labelledby="trayectoria">
-    <h2 id="trayectoria" class="sr-only">Trayectoria del programa</h2>
-    <dl class="contenedor grid gap-8 py-12 sm:grid-cols-3">
-      {
-        trayectoria.map((dato) => (
-          <div class="aparece">
-            <dt class="sr-only">{dato.detalle}</dt>
-            <dd>
-              <span class="font-titulo text-acento block text-[length:var(--text-titulo)] leading-none font-black">
-                {dato.valor}
-              </span>
-              <span class="mt-2 block text-lg font-semibold">{dato.unidad}</span>
-              <span class="text-texto-suave mt-1 block text-sm">{dato.detalle}</span>
-            </dd>
-          </div>
-        ))
-      }
-    </dl>
-  </section>
-
-  {/* Tres entrevistas destacadas. */}
-  <section class="contenedor py-14" aria-labelledby="destacadas">
-    <div class="flex flex-wrap items-baseline justify-between gap-4">
-      <h2
-        id="destacadas"
-        class="font-titulo text-[length:var(--text-grande)] font-black"
-      >
-        Entrevistas destacadas
-      </h2>
-      <a href="/entrevistas" class="text-acento text-sm underline underline-offset-4">
-        Ver todas las entrevistas
-      </a>
-    </div>
-
-    <ul class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {
-        destacadas.map((pieza) => (
-          <li class="aparece relative">
-            <TarjetaPieza
-              titulo={pieza.data.titulo}
-              tipo={pieza.data.tipo}
-              duracion={pieza.data.duracion}
-              fecha={ultima.data.fecha}
-              invitados={nombresDe(pieza.data.invitados)}
-              temas={pieza.data.temas}
-            />
-          </li>
-        ))
-      }
-    </ul>
-  </section>
-
-  {/* Bloque de humor: Las Humoradas de Luis Orpi son marca registrada del programa. */}
-  {
-    humor && (
-      <section class="border-borde bg-superficie border-y" aria-labelledby="humor">
-        <div class="contenedor grid items-center gap-8 py-14 lg:grid-cols-2">
+      <div class="min-w-0">
+        <div class="mb-3 flex items-center gap-4 lg:mb-7">
+          <Image
+            src={escudo}
+            alt=""
+            width={78}
+            height={78}
+            densities={[1, 2]}
+            loading="eager"
+            class="hidden h-19.5 w-19.5 object-cover lg:block"
+          />
           <div>
-            <p class="text-acento text-xs font-semibold tracking-widest uppercase">
-              El bloque de humor
-            </p>
-            <h2
-              id="humor"
-              class="font-titulo mt-3 text-[length:var(--text-grande)] leading-tight font-black"
+            <p
+              class="etiqueta text-brasa mb-2 text-[0.62rem] tracking-[0.2em] lg:text-[0.66rem]"
             >
-              Las Humoradas de Luis Orpi
-            </h2>
-            <p class="text-texto-suave mt-4">{humor.data.resumen}</p>
-            <p class="mt-6">
-              <a
-                href={`/entrevistas/${humor.id}`}
-                class="border-borde hover:border-acento inline-block border px-5 py-3 text-sm font-semibold"
-              >
-                Ver el segmento
-              </a>
+              <span class="lg:hidden"
+                >Emisión {numeroDeLaUltimaEmision.toLocaleString('es-UY')} ·
+              </span>
+              Al aire desde 2010
             </p>
-          </div>
-          <div class="aparece">
-            <FachadaYoutube videoId={humor.data.videoId} titulo={humor.data.titulo} />
+            <p class="text-gris hidden text-[0.85rem] lg:block">
+              {`Emisión ${numeroDeLaUltimaEmision.toLocaleString('es-UY')} · `}
+              <time datetime={ultima.data.fecha}
+                >{formatearFecha(ultima.data.fecha)}</time
+              >
+              {` · ${ultima.data.duracion}`}
+            </p>
           </div>
         </div>
-      </section>
-    )
-  }
 
-  {/* Buscador. El form es GET y sin JS: sirve para llegar a /buscar igual. */}
-  <section class="contenedor py-14" aria-labelledby="buscador">
-    <h2 id="buscador" class="font-titulo text-[length:var(--text-grande)] font-black">
-      Buscá en 16 años de archivo
-    </h2>
-    <p class="text-texto-suave mt-3 max-w-2xl">
-      Por nombre de invitado, por tema o por lo que se dijo. Son casi 3.000 programas y
-      más de 6.800 personas que pasaron por el estudio.
-    </p>
+        <h1 id="ultimo-programa">
+          <span class="sr-only">
+            Último programa, {formatearFecha(ultima.data.fecha)}:
+          </span>
+          <span
+            class="dato block text-[length:var(--text-heroe)] uppercase"
+            aria-hidden="true"
+          >
+            {fechaDePlaca}
+          </span>
+          <span
+            class="titulo-seccion text-rojo-claro mt-1.5 mb-5 block text-[1.45rem] leading-[1.05] lg:mt-2 lg:mb-7.5 lg:text-[2.625rem] lg:leading-none"
+          >
+            {apellidos}
+          </span>
+        </h1>
 
-    <form action="/buscar" method="get" class="mt-6 flex max-w-xl flex-wrap gap-2">
-      <label for="q" class="sr-only">Buscar en el archivo de Noche D10</label>
-      <input
-        type="search"
-        id="q"
-        name="q"
-        placeholder="Por ejemplo: Robert Silva"
-        class="border-borde bg-fondo text-texto placeholder:text-texto-suave min-w-0 flex-1 border px-4 py-3"
-      />
-      <button
-        type="submit"
-        class="bg-acento-fuerte text-sobre-acento px-5 py-3 text-sm font-semibold hover:opacity-90"
-      >
-        Buscar
-      </button>
-    </form>
+        <div class="mb-5 flex items-end gap-1 lg:mb-8" aria-hidden="true">
+          <div
+            class="ecualizador flex h-11 flex-1 items-end gap-1 lg:h-18 lg:flex-none lg:gap-1.25"
+          >
+            {
+              barrasDelEcualizador.map(([duracion, retraso, color], i) => (
+                <span
+                  class:list={[
+                    'h-full flex-1 lg:w-2 lg:flex-none',
+                    colorDeBarra[color],
+                    i >= 10 && 'hidden lg:block',
+                  ]}
+                  style={`--duracion:${duracion}s;--retraso:${retraso}s`}
+                />
+              ))
+            }
+          </div>
+          <span class="etiqueta text-gris-2 ml-4 hidden pb-1 lg:inline">
+            Dos horas de aire · miralo o escuchalo
+          </span>
+        </div>
+
+        <div class="hidden gap-3 lg:flex">
+          <a
+            href={urlDeEmision(ultima.data)}
+            class="boton boton-primario min-h-12.5 px-7"
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path d="M8 5v14l11-7z"></path>
+            </svg>
+            Ver el programa
+          </a>
+          {
+            spotify && (
+              <a
+                href={spotify}
+                class="boton boton-borde text-hueso min-h-12.5 px-7"
+                rel="noopener"
+              >
+                Escuchar el audio
+              </a>
+            )
+          }
+        </div>
+      </div>
+
+      <div class="-mx-[var(--gutter)] lg:mx-0">
+        <FachadaYoutube
+          videoId={ultima.data.videoId}
+          titulo={ultima.data.titulo}
+          prioridad
+          duracion={ultima.data.duracion}
+        />
+
+        <div class="px-[var(--gutter)] pt-5 lg:hidden">
+          <p class="etiqueta text-gris-2 mb-3.5 text-[0.62rem]">
+            {deLaUltima.length} piezas · dos horas de aire
+          </p>
+          <a
+            href={urlDeEmision(ultima.data)}
+            class="boton bg-hueso hover:bg-blanco text-negro mb-2.5 w-full justify-start"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path d="M8 5v14l11-7z"></path>
+            </svg>
+            Ver completo
+          </a>
+          <a
+            href={`${urlDeEmision(ultima.data)}#piezas`}
+            class="boton boton-borde text-hueso w-full justify-start"
+          >
+            Ir a las {deLaUltima.length} piezas
+          </a>
+        </div>
+
+        <div class="border-rojo mt-4 hidden border-t-2 pt-3.5 lg:block">
+          <h2 class="etiqueta text-gris-2 mb-3 text-[0.66rem]">
+            Las {deLaUltima.length} piezas de esta emisión
+          </h2>
+          <ul class="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1.5 text-[0.85rem]">
+            {
+              deLaUltima.map((pieza) => (
+                <li class="contents">
+                  <a
+                    href={`/entrevistas/${pieza.id}`}
+                    class="text-hueso hover:text-brasa"
+                  >
+                    {pieza.data.titulo.split(':')[0]}
+                  </a>
+                  <span class="text-gris text-right font-mono text-xs">
+                    {pieza.data.duracion}
+                  </span>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </div>
+    </div>
   </section>
 
-  {/* Dónde vernos. */}
-  <section class="border-borde bg-superficie border-y" aria-labelledby="donde">
-    <div class="contenedor py-14">
-      <h2 id="donde" class="font-titulo text-[length:var(--text-grande)] font-black">
-        Dónde vernos y escucharnos
-      </h2>
-      <ul class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  {/* ——— Franja de números ——— */}
+  <section class="bg-fondo border-borde border-b" aria-labelledby="trayectoria">
+    <div class="contenedor pt-2 pb-8 lg:pt-16 lg:pb-14">
+      <h2 id="trayectoria" class="sr-only">Trayectoria del programa</h2>
+      <dl class="border-regla grid border-t-2 lg:grid-cols-3">
         {
-          plataformas.map((plataforma) => (
-            <li class="border-borde aparece border p-5">
-              <p class="font-semibold">{plataforma.nombre}</p>
-              <p class="text-texto-suave mt-1 text-sm">{plataforma.detalle}</p>
+          franjaDeNumeros.map((dato, i) => (
+            <div
+              class:list={[
+                'border-borde flex items-baseline gap-4 border-b py-5 last:border-b-0 lg:block lg:border-b-0 lg:py-7.5',
+                i < 2 && 'lg:border-r',
+                i === 0 ? 'lg:pr-8' : i === 1 ? 'lg:px-8' : 'lg:pl-8',
+              ]}
+            >
+              <dd class="dato shrink-0 text-[4.5rem] lg:mb-3.5 lg:text-[length:var(--text-dato)]">
+                {dato.valor}
+              </dd>
+              <dt>
+                <span class="etiqueta text-acento mb-2 block text-[0.78rem] tracking-[0.14em] lg:text-[0.94rem]">
+                  {dato.unidad}
+                </span>
+                <span class="text-texto-suave block text-[0.8rem] lg:text-[0.85rem]">
+                  <span class="lg:hidden">{dato.corto}</span>
+                  <span class="hidden lg:inline">{dato.detalle}</span>
+                </span>
+              </dt>
+            </div>
+          ))
+        }
+      </dl>
+
+      <figure class="border-borde mt-2 lg:mt-11 lg:border-t lg:pt-5">
+        <div
+          class="flex h-13 items-end gap-0.75 lg:h-22 lg:gap-1.25"
+          aria-hidden="true"
+        >
+          {
+            barrasDeTrayectoria.map((altura, i) => (
+              <span
+                class:list={['crece flex-1', colorDeTrayectoria(i)]}
+                style={`height:${altura}%`}
+              />
+            ))
+          }
+        </div>
+        <figcaption class="mt-2.5 flex justify-between gap-4">
+          <span class="etiqueta text-texto-tenue text-[0.62rem] lg:text-[0.7rem]">
+            2010<span class="hidden lg:inline"> · primer martes</span>
+          </span>
+          <span class="text-texto-tenue hidden text-[0.72rem] lg:inline">
+            una barra por año al aire · la altura acumula programas
+          </span>
+          <span class="etiqueta text-acento text-[0.62rem] lg:text-[0.7rem]">
+            2026<span class="hidden lg:inline"> · hoy</span>
+          </span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  {/* ——— Entrevistas destacadas ——— */}
+  <section class="bg-banda border-borde border-b" aria-labelledby="destacadas">
+    <div class="contenedor py-7 lg:py-15">
+      <div class={encabezadoDeSeccion}>
+        <h2 id="destacadas" class="titulo-seccion text-[1.875rem] lg:text-[2.75rem]">
+          Entrevistas destacadas
+        </h2>
+        <a
+          href="/entrevistas"
+          class="etiqueta text-acento hover:text-texto hidden text-[0.78rem] tracking-[0.12em] lg:inline"
+        >
+          Ver todas →
+        </a>
+      </div>
+
+      <ul class="grid gap-4.5 lg:grid-cols-3 lg:gap-7">
+        {
+          destacadas.map((pieza) => (
+            <li class="aparece">
+              <article class="bg-superficie hover:bg-superficie-alta group relative h-full transition-colors">
+                <div class="bg-superficie-alta relative aspect-video overflow-hidden lg:aspect-[16/10]">
+                  {pieza.data.videoId && (
+                    <img
+                      src={`https://i.ytimg.com/vi_webp/${pieza.data.videoId}/mqdefault.webp`}
+                      alt=""
+                      width="320"
+                      height="180"
+                      loading="lazy"
+                      decoding="async"
+                      class="h-full w-full object-cover grayscale-[0.35] transition-[filter] group-hover:grayscale-0"
+                    />
+                  )}
+                </div>
+                <div class="p-4 lg:p-5.5">
+                  <p class="etiqueta text-acento mb-2.5 text-[0.62rem] lg:mb-3 lg:text-[0.66rem]">
+                    <span class="hidden lg:inline">
+                      {etiquetaDe[pieza.data.tipo]} ·{' '}
+                    </span>
+                    {temaDe(pieza.data.temas)} · {pieza.data.duracion}
+                  </p>
+                  <h3 class="mb-3 text-xl leading-[1.15] font-extrabold lg:text-2xl lg:leading-[1.13]">
+                    <a
+                      href={`/entrevistas/${pieza.id}`}
+                      class="after:absolute after:inset-0"
+                    >
+                      {pieza.data.titulo}
+                    </a>
+                  </h3>
+                  <p class="text-texto-suave hidden text-[0.8rem] lg:block">
+                    <time datetime={pieza.data.emision.id}>
+                      {fechaConPuntos(pieza.data.emision.id)}
+                    </time>
+                  </p>
+                </div>
+              </article>
             </li>
           ))
         }
       </ul>
-      <p class="mt-6">
-        <a
-          href="/donde-vernos"
-          class="text-acento text-sm underline underline-offset-4"
-        >
-          Cómo sintonizarnos en cada plataforma
-        </a>
-      </p>
+
+      <a
+        href="/entrevistas"
+        class="boton boton-borde mt-4.5 w-full justify-start lg:hidden"
+      >
+        Ver todas las entrevistas
+      </a>
     </div>
   </section>
 
-  {/* Anunciantes: la sección que le paga el programa al cliente. */}
-  <section class="contenedor py-14" aria-labelledby="anunciantes">
-    <h2
-      id="anunciantes"
-      class="font-titulo text-[length:var(--text-grande)] font-black"
+  {/* ——— Las Humoradas de Luis Orpi ——— */}
+  <section class="bg-fondo border-borde border-b" aria-labelledby="humor">
+    <div
+      class="lg:contenedor grid items-start gap-5 py-7 lg:grid-cols-[22.5rem_1fr] lg:gap-11 lg:py-15"
     >
-      Anunciá en Noche D10
-    </h2>
-    <ul class="mt-6 grid gap-6 sm:grid-cols-3">
-      {
-        argumentos.map((argumento) => (
-          <li class="aparece">
-            <h3 class="text-acento font-semibold">{argumento.titulo}</h3>
-            <p class="text-texto-suave mt-2 text-sm">{argumento.detalle}</p>
-          </li>
-        ))
-      }
-    </ul>
-    <p class="mt-8">
+      <div class="px-[var(--gutter)] lg:px-0">
+        <div
+          class="bg-humor mb-3.5 h-1.25 w-16 lg:mb-5 lg:h-1.5 lg:w-21"
+          aria-hidden="true"
+        >
+        </div>
+        <h2 id="humor" class="placa mb-2.5 text-[2.125rem] lg:mb-4.5 lg:text-[3.25rem]">
+          Las Humoradas de Luis Orpi
+        </h2>
+        <p class="text-texto-suave text-[0.85rem] lg:mb-5.5 lg:text-[0.9rem]">
+          <span class="lg:hidden">{humoradas.bajadaCorta}</span>
+          <span class="hidden lg:inline">{humoradas.bajada}</span>
+        </p>
+        <a
+          href="/entrevistas"
+          class="boton bg-humor text-sobre-humor hidden hover:bg-[#ffd647] lg:inline-flex"
+        >
+          Ver todas las humoradas
+        </a>
+      </div>
+
+      <ul
+        class="flex snap-x scroll-px-[var(--gutter)] gap-3 overflow-x-auto px-[var(--gutter)] pb-1.5 lg:grid lg:grid-cols-3 lg:gap-5 lg:overflow-visible lg:px-0"
+      >
+        {
+          ultimasHumoradas.map((pieza) => (
+            <li class="border-humor relative w-50 shrink-0 snap-start border-t-2 pt-3 lg:w-auto lg:pt-4">
+              <div class="bg-superficie-alta mb-2.5 aspect-[4/3] overflow-hidden lg:mb-3.5">
+                {pieza.data.videoId && (
+                  <img
+                    src={`https://i.ytimg.com/vi_webp/${pieza.data.videoId}/mqdefault.webp`}
+                    alt=""
+                    width="320"
+                    height="180"
+                    loading="lazy"
+                    decoding="async"
+                    class="h-full w-full object-cover"
+                  />
+                )}
+              </div>
+              <h3 class="mb-1.5 text-base leading-[1.15] font-extrabold lg:mb-2 lg:text-lg">
+                <a
+                  href={`/entrevistas/${pieza.id}`}
+                  class="after:absolute after:inset-0"
+                >
+                  {pieza.data.titulo.split(' — ')[0]}
+                </a>
+              </h3>
+              <p class="text-texto-tenue font-mono text-[0.7rem] lg:text-xs">
+                {fechaConPuntos(pieza.data.emision.id)} · {pieza.data.duracion}
+              </p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  {/* ——— Buscador ——— */}
+  <section class="bg-rojo text-blanco" aria-labelledby="buscador">
+    <div class="contenedor py-8.5 lg:py-18">
+      <div class="max-w-[68.75rem]">
+        <h2
+          id="buscador"
+          class="placa mb-4.5 text-[2.375rem] lg:mb-6.5 lg:text-[4.25rem]"
+        >
+          Buscá a cualquiera de los 6.800 invitados
+        </h2>
+
+        {/* Form GET real: sin JS lleva a /buscar?q=... igual. */}
+        <form
+          action="/buscar"
+          method="get"
+          class="bg-negro border-negro mb-3.5 flex items-center border-2 lg:mb-0"
+        >
+          <svg
+            class="text-gris mx-3.5 h-5 w-5 shrink-0 lg:mx-5 lg:h-6 lg:w-6"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path>
+          </svg>
+          <label for="q-home" class="sr-only">Buscar en el archivo de Noche D10</label>
+          <input
+            id="q-home"
+            type="search"
+            name="q"
+            placeholder="Nombre, apellido o tema…"
+            class="text-hueso placeholder:text-gris-2 min-h-13 min-w-0 flex-1 bg-transparent py-3 text-base outline-offset-4 lg:min-h-19 lg:text-[1.375rem]"
+          />
+          <button
+            type="submit"
+            class="boton bg-hueso hover:bg-blanco text-negro min-h-13 self-stretch px-5 lg:px-8.5"
+          >
+            Buscar
+          </button>
+        </form>
+
+        <div class="mt-5 flex flex-wrap items-center gap-2 lg:gap-2.5">
+          <span class="etiqueta text-blanco/75 mr-1.5 hidden text-[0.68rem] lg:inline"
+            >Buscados esta semana</span
+          >
+          {
+            buscadosEstaSemana.map((nombre, i) => (
+              <a
+                href={`/buscar?q=${encodeURIComponent(nombre)}`}
+                class:list={[
+                  'border-blanco/45 hover:bg-blanco/15 border px-3.5 py-2.5 text-[0.78rem] leading-none font-bold transition-colors',
+                  i >= 3 && 'hidden lg:inline-block',
+                ]}
+              >
+                {nombre}
+              </a>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* ——— Dónde vernos ——— */}
+  <section class="bg-fondo border-borde border-b" aria-labelledby="donde">
+    <div class="contenedor py-7 lg:py-15">
+      <div class={encabezadoDeSeccion}>
+        <h2 id="donde" class="titulo-seccion text-[1.875rem] lg:text-[2.75rem]">
+          Dónde vernos<span class="hidden lg:inline"> y escucharnos</span>
+        </h2>
+        <a
+          href="/donde-vernos"
+          class="text-texto-suave hover:text-texto hidden text-[0.8rem] lg:inline"
+        >
+          Martes, 21:00 · dos horas
+        </a>
+      </div>
+
+      <ul class="border-borde bg-borde grid grid-cols-2 gap-0.5 border lg:grid-cols-4">
+        {
+          plataformas.map((plataforma) => {
+            const destino = plataforma.href ?? '/donde-vernos';
+            return (
+              <li class="bg-superficie hover:bg-superficie-alta relative flex min-h-37 flex-col gap-2.5 p-4 transition-colors lg:min-h-52.5 lg:gap-3.5 lg:px-6 lg:py-7">
+                <svg
+                  class="text-acento h-5.5 w-5.5 lg:h-6.5 lg:w-6.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  aria-hidden="true"
+                  set:html={iconoDe(plataforma)}
+                />
+                <h3 class="mt-auto text-[1.05rem] leading-[1.1] font-extrabold lg:text-[1.375rem] lg:leading-[1.12]">
+                  <a
+                    href={destino}
+                    class="after:absolute after:inset-0"
+                    rel={plataforma.href ? 'noopener' : undefined}
+                  >
+                    {plataforma.nombre}
+                  </a>
+                </h3>
+                <p class="text-texto-suave text-xs lg:text-[0.8rem]">
+                  {plataforma.detalle}
+                </p>
+                <p
+                  class="etiqueta text-acento hidden text-[0.68rem] tracking-[0.14em] lg:block"
+                  aria-hidden="true"
+                >
+                  {accionesDePlataforma[plataforma.nombre] ?? 'Ver más →'}
+                </p>
+              </li>
+            );
+          })
+        }
+      </ul>
+    </div>
+  </section>
+
+  {/* ——— Anunciantes ——— */}
+  <section class="bg-banda border-borde border-b" aria-labelledby="anunciantes">
+    <div class="contenedor py-6 lg:py-11">
+      <div class="mb-4 flex items-center justify-between lg:mb-6.5">
+        <h2
+          id="anunciantes"
+          class="etiqueta text-texto-tenue text-[0.62rem] tracking-[0.2em] lg:text-[0.7rem]"
+        >
+          Nos acompañan
+        </h2>
+        <a
+          href="/anunciantes"
+          class="etiqueta text-acento hover:text-texto hidden text-[0.75rem] tracking-[0.12em] lg:inline"
+        >
+          Pautá en Noche D10 →
+        </a>
+      </div>
+
+      {/* TODO: dato pendiente del cliente — logos de los anunciantes actuales. */}
+      <ul class="border-borde bg-borde grid grid-cols-3 gap-0.5 border lg:grid-cols-6">
+        <li class="bg-fondo grid h-20.5 place-items-center p-2.5 lg:h-26 lg:p-3.5">
+          <Image
+            src={marRepuestos}
+            alt="MAR Repuestos"
+            width={74}
+            height={74}
+            densities={[1, 2]}
+            class="max-h-15 w-auto opacity-85 contrast-[1.08] grayscale lg:max-h-18.5"
+          />
+        </li>
+        {
+          Array.from({ length: 5 }, (_, i) => (
+            <li
+              class:list={[
+                'bg-fondo etiqueta text-texto-tenue grid h-20.5 place-items-center text-[0.6rem] lg:h-26',
+                i >= 2 && 'hidden lg:grid',
+              ]}
+              aria-hidden="true"
+            >
+              Logo
+            </li>
+          ))
+        }
+      </ul>
+
       <a
         href="/anunciantes"
-        class="bg-acento-fuerte text-sobre-acento inline-block px-5 py-3 text-sm font-semibold hover:opacity-90"
+        class="etiqueta text-acento mt-4 inline-block text-[0.72rem] tracking-[0.12em] lg:hidden"
       >
-        Pedir el kit de pauta
+        Pautá en Noche D10 →
       </a>
-    </p>
+    </div>
   </section>
 </Base>

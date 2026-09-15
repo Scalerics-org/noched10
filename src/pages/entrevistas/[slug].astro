@@ -1,24 +1,30 @@
 ---
 /**
- * Ficha de una pieza.
+ * Ficha de una pieza (diseño 2a desktop / 2b mobile).
  *
  * La ruta es /entrevistas/ para todas las piezas, incluidas las de humor, las
  * columnas y las musicales, porque en este programa todo segmento se arma
- * alrededor de un invitado: "Las Humoradas de Luis Orpi" sale con Sergio Sosa,
- * la columna de tenencia compartida con Raúl Menéndez, la musical con la
- * Sonora Palacio. El tipo de pieza se muestra arriba del título.
+ * alrededor de un invitado. El tipo de pieza se muestra arriba del título.
+ *
+ * "De qué se habló", "Momentos" y la ficha del invitado salen de maqueta.ts
+ * cuando existen (texto de ejemplo del diseño); si no, cae en el resumen real.
+ * Los controles de reproductor del diseño (barra, volumen, 1x) no se dibujan:
+ * serían botones que no hacen nada. El play real es la fachada de YouTube.
  */
 import type { GetStaticPaths } from 'astro';
 import { getCollection, getEntry } from 'astro:content';
 
 import Base from '../../layouts/Base.astro';
 import FachadaYoutube from '../../componentes/FachadaYoutube.astro';
-import TarjetaPieza from '../../componentes/TarjetaPieza.astro';
-import { nombresDeInvitados, piezasDe } from '../../datos/consultas';
-import { urlDeEmision, urlDeInvitado, urlDelArchivo } from '../../datos/archivo';
+import { nombresDeInvitados, piezasDe, piezasOrdenadas } from '../../datos/consultas';
+import { urlDeEmision, urlDelArchivo } from '../../datos/archivo';
 import { video } from '../../datos/esquemas';
-import { sitio } from '../../datos/sitio';
-import { formatearFecha } from '../../datos/texto';
+import { redes, sitio } from '../../datos/sitio';
+import { anioDe, fechaConPuntos, formatearFecha } from '../../datos/texto';
+import {
+  entrevistas as entrevistasDeMaqueta,
+  invitados as invitadosDeMaqueta,
+} from '../../datos/maqueta';
 
 export const getStaticPaths = (async () => {
   const piezas = await getCollection('piezas');
@@ -35,16 +41,40 @@ const emision = (await getEntry(pieza.data.emision))!;
 
 const nombresDe = await nombresDeInvitados();
 const invitados = nombresDe(pieza.data.invitados);
+const principal = pieza.data.invitados[0]
+  ? await getEntry('invitados', pieza.data.invitados[0].id)
+  : undefined;
+
+const maqueta = entrevistasDeMaqueta[pieza.id];
+const fichaDeMaqueta = principal ? invitadosDeMaqueta[principal.id] : undefined;
 
 // El resto del programa, para que la ficha no sea un callejón sin salida.
 const hermanas = (await piezasDe(emision)).filter((otra) => otra.id !== pieza.id);
 
+// Relacionadas: mismo tema, de otras emisiones, las más nuevas primero.
+const relacionadas = (await piezasOrdenadas())
+  .filter(
+    (otra) =>
+      otra.data.emision.id !== emision.id &&
+      otra.data.temas.some((tema) => pieza.data.temas.includes(tema)),
+  )
+  .slice(0, 3);
+
 const etiquetas: Record<string, string> = {
   entrevista: 'Entrevista',
-  humor: 'Segmento de humor',
+  humor: 'Humor',
   columna: 'Columna',
   musica: 'Música en vivo',
 };
+const mayuscula = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+const temaPrincipal = pieza.data.temas[0] ? mayuscula(pieza.data.temas[0]) : '';
+const temasVisibles = maqueta?.temas ?? pieza.data.temas.map(mayuscula);
+const tituloCorto = pieza.data.titulo.split(':')[0];
+
+const urlYoutube = pieza.data.videoId
+  ? `https://www.youtube.com/watch?v=${pieza.data.videoId}`
+  : null;
+const spotify = redes.find((r) => r.nombre === 'Spotify')?.href;
 
 const base = Astro.site ?? new URL(sitio.url);
 const grafo = [
@@ -61,6 +91,8 @@ const grafo = [
     sitio.imagenOg,
   ),
 ];
+
+const miga = 'text-acento hover:text-texto';
 ---
 
 <Base
@@ -74,115 +106,435 @@ const grafo = [
     { nombre: pieza.data.titulo, ruta: `/entrevistas/${pieza.id}` },
   ]}
 >
-  <article class="contenedor py-12">
-    <p class="text-acento text-xs font-semibold tracking-widest uppercase">
-      {etiquetas[pieza.data.tipo] ?? pieza.data.tipo}
-      <span aria-hidden="true"> · </span>{pieza.data.duracion}
-    </p>
-
-    <h1
-      class="font-titulo mt-3 max-w-4xl text-[length:var(--text-titulo)] leading-tight font-black"
+  <nav
+    aria-label="Estás en"
+    class="bg-banda border-borde border-b"
+    data-pagefind-ignore
+  >
+    <ol
+      class="contenedor text-texto-tenue flex min-h-11 flex-wrap items-center gap-x-2.5 py-2 text-[0.75rem] font-bold"
     >
-      {pieza.data.titulo}
-    </h1>
+      <li><a href="/programas" class={miga}>Archivo</a></li>
+      <li aria-hidden="true">/</li>
+      <li class="hidden sm:block">
+        <a href={urlDelArchivo({ anio: anioDe(emision.data.fecha) })} class={miga}>
+          {anioDe(emision.data.fecha)}
+        </a>
+      </li>
+      <li aria-hidden="true" class="hidden sm:block">/</li>
+      <li>
+        <a href={urlDeEmision(emision.data)} class={miga}>
+          Emisión {fechaConPuntos(emision.data.fecha)}
+        </a>
+      </li>
+      <li aria-hidden="true" class="hidden md:block">/</li>
+      <li class="text-texto hidden md:block" aria-current="page">{tituloCorto}</li>
+    </ol>
+  </nav>
 
-    <p class="text-texto-suave mt-4">
-      De la emisión del{' '}
-      <a
-        href={urlDeEmision(emision.data)}
-        class="text-acento underline underline-offset-4"
-      >
-        <time datetime={emision.data.fecha}>{formatearFecha(emision.data.fecha)}</time>
-      </a>
-    </p>
-
-    <div class="mt-8 max-w-4xl">
+  <article class="bg-fondo pb-12">
+    <div class="lg:[&_[data-fachada]]:aspect-[9/4]">
       <FachadaYoutube
         videoId={pieza.data.videoId}
         titulo={pieza.data.titulo}
         prioridad
+        tamano="grande"
+        duracion={pieza.data.duracion}
       />
     </div>
 
-    <p class="mt-6 max-w-2xl">{pieza.data.resumen}</p>
+    <header class="contenedor pt-5 lg:pt-10">
+      <div class="mb-3 flex flex-wrap items-center gap-3 lg:mb-4.5">
+        <span
+          class="etiqueta bg-acento-fuerte text-sobre-acento hidden px-3 py-2 text-[0.66rem] lg:inline-block"
+        >
+          {etiquetas[pieza.data.tipo] ?? pieza.data.tipo}
+        </span>
+        <p
+          class="etiqueta text-acento lg:text-texto-suave text-[0.62rem] lg:text-[0.72rem]"
+        >
+          <span class="lg:hidden">{etiquetas[pieza.data.tipo]} · </span>
+          {temaPrincipal && `${temaPrincipal} · `}
+          <span class="hidden lg:inline">{pieza.data.duracion} · </span>
+          <time datetime={emision.data.fecha}>{fechaConPuntos(emision.data.fecha)}</time
+          >
+        </p>
+      </div>
 
-    <div class="mt-10 flex flex-wrap gap-8">
-      {
-        invitados.length > 0 && (
-          <section aria-labelledby="con">
-            <h2
-              id="con"
-              class="text-texto-suave text-xs font-semibold tracking-widest uppercase"
+      <h1 class="placa mb-4.5 max-w-[24ch] text-[2.5rem] lg:mb-6.5 lg:text-[5rem]">
+        {tituloCorto}
+      </h1>
+
+      <div
+        class="lg:border-regla flex flex-col gap-2.5 pb-6 lg:flex-row lg:flex-wrap lg:border-b-2 lg:pb-8.5"
+      >
+        {
+          urlYoutube && (
+            <a
+              href={urlYoutube}
+              class="boton boton-primario min-h-13 lg:min-h-12.5"
+              rel="noopener"
             >
-              Con
-            </h2>
-            <ul class="mt-3 flex flex-wrap gap-2">
-              {invitados.map((nombre) => (
-                <li>
-                  <a
-                    href={urlDeInvitado(nombre)}
-                    class="border-borde hover:border-acento hover:text-acento block border px-3 py-1.5 text-sm transition-colors"
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path d="M8 5v14l11-7z" />
+              </svg>
+              Ver en YouTube
+            </a>
+          )
+        }
+        {
+          spotify && (
+            <a
+              href={spotify}
+              class="boton boton-borde min-h-13 lg:min-h-12.5"
+              rel="noopener"
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <rect x="9" y="2" width="6" height="12" rx="3" />
+                <path d="M5 11a7 7 0 0 0 14 0" />
+                <path d="M12 18v4" />
+              </svg>
+              Escuchar el audio
+            </a>
+          )
+        }
+        <button
+          type="button"
+          class="boton boton-borde hidden min-h-12.5 lg:inline-flex"
+          data-compartir
+          hidden
+        >
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path d="M4 12v7h16v-7"></path>
+            <path d="M12 16V3"></path>
+            <path d="m8 7 4-4 4 4"></path>
+          </svg>
+          Compartir
+        </button>
+      </div>
+    </header>
+
+    {
+      principal && (
+        <aside
+          class="bg-superficie border-rojo flex items-center gap-3.5 border-t-2 px-[var(--gutter)] py-5 lg:hidden"
+          aria-label="El invitado"
+        >
+          <div class="bg-superficie-alta h-20.5 w-20.5 shrink-0" aria-hidden="true" />
+          <div class="min-w-0">
+            <p class="titulo-seccion mb-1.5 text-[1.375rem]">{principal.data.nombre}</p>
+            {fichaDeMaqueta && (
+              <p class="text-acento mb-2 text-[0.8rem]">{fichaDeMaqueta.rol}</p>
+            )}
+            <a
+              href={`/invitados/${principal.id}`}
+              class="etiqueta text-texto-suave text-[0.66rem] tracking-[0.14em]"
+            >
+              {principal.data.apariciones}{' '}
+              {principal.data.apariciones === 1 ? 'aparición' : 'apariciones'} →
+            </a>
+          </div>
+        </aside>
+      )
+    }
+
+    <div class="contenedor grid gap-13 pt-6 lg:grid-cols-[1fr_24.75rem] lg:pt-9.5">
+      <div>
+        <h2 class="titulo-seccion mb-3 text-[1.375rem] lg:mb-4 lg:text-[1.625rem]">
+          De qué se habló
+        </h2>
+        {
+          maqueta ? (
+            maqueta.deQueSeHablo.map((parrafo, i) => (
+              <p
+                class:list={[
+                  'mb-4 max-w-[66ch] text-pretty',
+                  i === 0
+                    ? 'text-[0.95rem] leading-[1.7] lg:text-[1.0625rem]'
+                    : 'text-texto-suave hidden text-[0.97rem] leading-[1.75] lg:block',
+                ]}
+              >
+                {parrafo}
+              </p>
+            ))
+          ) : (
+            <p class="mb-4 max-w-[66ch] text-[0.95rem] leading-[1.7] text-pretty lg:text-[1.0625rem]">
+              {pieza.data.resumen}
+            </p>
+          )
+        }
+
+        {
+          maqueta && (
+            <section aria-labelledby="momentos" class="mt-6 lg:mt-8.5">
+              <h2
+                id="momentos"
+                class="titulo-seccion mb-1 text-[1.375rem] lg:text-[1.625rem]"
+              >
+                Momentos
+              </h2>
+              <ol class="border-regla border-t-2">
+                {maqueta.momentos.map((momento, i) => (
+                  <li
+                    class:list={[
+                      'border-borde grid min-h-12 grid-cols-[3.9rem_1fr] items-baseline gap-3.5 border-b px-0.5 py-3.5 lg:grid-cols-[4.9rem_1fr] lg:gap-5 lg:px-1',
+                      i === 0 && 'hidden lg:grid',
+                    ]}
                   >
-                    {nombre}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )
-      }
+                    <span class="text-acento font-mono text-[0.8rem] font-bold">
+                      {momento.tiempo}
+                    </span>
+                    <span class="text-[0.9rem] leading-[1.4] lg:text-[0.97rem]">
+                      {momento.texto}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )
+        }
 
-      {
-        pieza.data.temas.length > 0 && (
-          <section aria-labelledby="temas">
-            <h2
-              id="temas"
-              class="text-texto-suave text-xs font-semibold tracking-widest uppercase"
-            >
-              Temas
-            </h2>
-            <ul class="mt-3 flex flex-wrap gap-2">
-              {pieza.data.temas.map((tema) => (
-                <li>
+        {
+          temasVisibles.length > 0 && (
+            <div class="mt-6.5 hidden flex-wrap items-center gap-2 lg:flex">
+              <span class="etiqueta text-texto-tenue mr-1.5 text-[0.66rem]">Temas</span>
+              {temasVisibles.map((tema) => {
+                const real = pieza.data.temas.find((t) => t === tema.toLowerCase());
+                return real ? (
                   <a
-                    href={urlDelArchivo({ tema })}
-                    class="border-borde hover:border-acento hover:text-acento block border px-3 py-1.5 text-sm capitalize transition-colors"
+                    href={urlDelArchivo({ tema: real })}
+                    class="chip min-h-9 px-3.5 normal-case"
                   >
                     {tema}
                   </a>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )
-      }
+                ) : (
+                  <span class="chip hover:border-borde hover:text-texto-suave min-h-9 px-3.5 normal-case">
+                    {tema}
+                  </span>
+                );
+              })}
+            </div>
+          )
+        }
+      </div>
+
+      <div class="hidden lg:block">
+        {
+          principal && (
+            <aside
+              class="bg-superficie border-rojo border-t-2 p-5.5"
+              aria-labelledby="el-invitado"
+            >
+              <h2
+                id="el-invitado"
+                class="etiqueta text-texto-tenue mb-4 text-[0.66rem] tracking-[0.18em]"
+              >
+                El invitado
+              </h2>
+              {/* TODO: dato pendiente del cliente — retratos de los invitados. */}
+              <div class="bg-superficie-alta mb-4 aspect-square" aria-hidden="true" />
+              <p class="titulo-seccion mb-2 text-[1.875rem]">{principal.data.nombre}</p>
+              {fichaDeMaqueta && (
+                <p class="text-acento mb-3.5 text-[0.85rem]">{fichaDeMaqueta.rol}</p>
+              )}
+              {fichaDeMaqueta?.bio[0] && (
+                <p class="text-texto-suave mb-4.5 text-[0.875rem] leading-[1.65]">
+                  {fichaDeMaqueta.bio[0]}
+                </p>
+              )}
+              <dl class="border-borde bg-borde mb-4.5 grid grid-cols-2 gap-0.5 border">
+                {(
+                  fichaDeMaqueta?.datos ?? [
+                    {
+                      valor: String(principal.data.apariciones),
+                      etiqueta: 'Apariciones',
+                    },
+                  ]
+                ).map((dato) => (
+                  <div class="bg-fondo px-3 py-3.5">
+                    <dd class="dato mb-1.5 text-[1.875rem] leading-none">
+                      {dato.valor}
+                    </dd>
+                    <dt class="etiqueta text-texto-tenue text-[0.6rem] tracking-[0.14em]">
+                      {dato.etiqueta}
+                    </dt>
+                  </div>
+                ))}
+              </dl>
+              <a
+                href={`/invitados/${principal.id}`}
+                class="boton boton-borde w-full text-[0.75rem]"
+              >
+                Ver su ficha completa →
+              </a>
+            </aside>
+          )
+        }
+
+        {
+          hermanas.length > 0 && (
+            <section
+              class="border-regla mt-6.5 border-t-2 pt-4"
+              aria-labelledby="hermanas"
+            >
+              <h2
+                id="hermanas"
+                class="etiqueta text-texto-tenue mb-3 text-[0.66rem] tracking-[0.18em]"
+              >
+                También de esta emisión
+              </h2>
+              <ul>
+                {hermanas.map((otra) => (
+                  <li class="border-borde hover:bg-texto/5 relative flex justify-between gap-3 border-b px-0.5 py-3">
+                    <a
+                      href={`/entrevistas/${otra.id}`}
+                      class="text-[0.9rem] leading-[1.25] font-extrabold after:absolute after:inset-0"
+                    >
+                      {otra.data.titulo.split(':')[0]}
+                    </a>
+                    <span class="text-texto-tenue shrink-0 font-mono text-xs">
+                      {otra.data.duracion}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <a
+                href={urlDeEmision(emision.data)}
+                class="boton boton-texto mt-1 px-0.5 text-[0.75rem]"
+              >
+                Ver la emisión completa →
+              </a>
+            </section>
+          )
+        }
+      </div>
     </div>
 
     {
-      hermanas.length > 0 && (
-        <section class="mt-14" aria-labelledby="resto">
-          <h2
-            id="resto"
-            class="font-titulo text-[length:var(--text-grande)] font-black"
-          >
-            El resto de ese programa
-          </h2>
-          <ul class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {hermanas.map((otra) => (
-              <li class="relative">
-                <TarjetaPieza
-                  titulo={otra.data.titulo}
-                  tipo={otra.data.tipo}
-                  duracion={otra.data.duracion}
-                  fecha={emision.data.fecha}
-                  invitados={nombresDe(otra.data.invitados)}
-                  temas={otra.data.temas}
-                />
-              </li>
-            ))}
-          </ul>
+      relacionadas.length > 0 && (
+        <section
+          class="bg-banda lg:bg-fondo mt-6 py-6 lg:mt-0 lg:pt-12 lg:pb-0"
+          aria-labelledby="relacionadas"
+        >
+          <div class="contenedor">
+            <div class="border-regla mb-4 flex items-end justify-between gap-4 border-b-2 pb-2.5 lg:mb-6.5 lg:pb-3.5">
+              <h2
+                id="relacionadas"
+                class="titulo-seccion text-[1.375rem] lg:text-[2.375rem]"
+              >
+                <span class="hidden lg:inline">Entrevistas </span>relacionadas
+              </h2>
+              <span class="text-texto-suave hidden text-[0.8rem] lg:inline">
+                {temaPrincipal} · {anioDe(emision.data.fecha)}
+              </span>
+            </div>
+            <ul class="grid gap-3.5 lg:grid-cols-3 lg:gap-6.5">
+              {relacionadas.map((otra) => (
+                <li class="bg-superficie hover:bg-superficie-alta relative flex gap-3 transition-colors lg:block">
+                  <div class="bg-superficie-alta aspect-video w-30 shrink-0 overflow-hidden lg:w-auto">
+                    {otra.data.videoId && (
+                      <img
+                        src={`https://i.ytimg.com/vi_webp/${otra.data.videoId}/mqdefault.webp`}
+                        alt=""
+                        width="320"
+                        height="180"
+                        loading="lazy"
+                        decoding="async"
+                        class="h-full w-full object-cover"
+                      />
+                    )}
+                  </div>
+                  <div class="py-2.5 pr-3 lg:p-4.5">
+                    <p class="etiqueta text-acento mb-2 text-[0.58rem] tracking-[0.14em] lg:mb-2.5 lg:text-[0.66rem]">
+                      <span class="hidden lg:inline">
+                        {etiquetas[otra.data.tipo]} ·{' '}
+                      </span>
+                      {otra.data.temas[0] && `${mayuscula(otra.data.temas[0])} · `}
+                      {otra.data.duracion}
+                    </p>
+                    <h3 class="text-[0.95rem] leading-[1.15] font-extrabold lg:mb-2.5 lg:text-xl">
+                      <a
+                        href={`/entrevistas/${otra.id}`}
+                        class="after:absolute after:inset-0"
+                      >
+                        {otra.data.titulo}
+                      </a>
+                    </h3>
+                    <p class="text-texto-tenue hidden font-mono text-xs lg:block">
+                      {fechaConPuntos(otra.data.emision.id)}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
         </section>
       )
     }
   </article>
+
+  <section
+    class="bg-banda border-borde hidden border-t lg:block"
+    aria-labelledby="cta-archivo"
+  >
+    <div class="contenedor flex items-center gap-7.5 py-8.5">
+      <div class="flex-1">
+        <h2 id="cta-archivo" class="titulo-seccion mb-2 text-[1.875rem]">
+          Buscá a cualquiera de los 6.800 invitados
+        </h2>
+        <p class="text-texto-suave text-[0.85rem]">
+          Dieciséis años de archivo, en un solo campo de búsqueda.
+        </p>
+      </div>
+      <a href="/buscar" class="boton boton-primario min-h-13 shrink-0">
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path>
+        </svg>
+        Ir al archivo
+      </a>
+    </div>
+  </section>
 </Base>
+
+<script>
+  // Compartir con la hoja nativa del sistema. Donde no existe, el botón no aparece.
+  const boton = document.querySelector<HTMLButtonElement>('[data-compartir]');
+  if (boton && 'share' in navigator) {
+    boton.hidden = false;
+    boton.addEventListener('click', () => {
+      navigator.share({ title: document.title, url: location.href }).catch(() => {
+        /* El usuario cerró la hoja de compartir: no es un error. */
+      });
+    });
+  }
+</script>

@@ -64,6 +64,7 @@ ni página decide nada por su cuenta.
 | `texto.ts`       | Slug, formato de fechas y duraciones ISO 8601.                                   |
 | `anunciantes.ts` | Formatos de pauta, argumentos de venta y campos del formulario.                  |
 | `contacto.ts`    | Datos de contacto y destino de los formularios.                                  |
+| `maqueta.ts`     | **Texto de ejemplo del diseño, NO es dato del cliente.** Nunca entra al JSON-LD. |
 
 ### `src/content.config.ts`
 
@@ -77,7 +78,8 @@ valida Astro con `reference()`.
 
 | Archivo                    | Qué hace                                                |
 | -------------------------- | ------------------------------------------------------- |
-| `Cabezal.astro`            | Barra fija de próxima emisión y navegación.             |
+| `Cabezal.astro`            | Navegación con escudo y menú mobile, fijo arriba.       |
+| `BarraDeEmision.astro`     | Próxima emisión con cuenta regresiva y botón en vivo.   |
 | `PieDePagina.astro`        | Pie con el llamado a pauta.                             |
 | `FachadaYoutube.astro`     | Miniatura + play que inyecta el iframe recién al click. |
 | `TarjetaPieza.astro`       | Tarjeta de entrevista, humor, columna o música.         |
@@ -118,13 +120,15 @@ El sitemap lo genera `@astrojs/sitemap` en `/sitemap-index.xml`.
 
 ### Otros
 
-| Archivo                                                                                                    | Qué hace                                              |
-| ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| `src/layouts/Base.astro`                                                                                   | Layout único: `<head>` completo, SEO, JSON-LD y tema. |
-| `src/estilos/global.css`                                                                                   | Tokens de marca, temas, grilla y animaciones.         |
-| `scripts/generar-iconos.mjs`                                                                               | Genera favicons y placa OG. Se corre a mano.          |
-| `scripts/bootstrap-repo.sh`, `.ps1`                                                                        | Arranque del repo según el manual de Scalerics.       |
-| `public/favicon.ico`, `favicon.svg`, `icono-180.png`, `icono-192.png`, `icono-512.png`, `og-noche-d10.png` | Íconos y placa para compartir. **Provisorios.**       |
+| Archivo                                                                                                    | Qué hace                                                |
+| ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `src/layouts/Base.astro`                                                                                   | Layout único: `<head>` completo, SEO, JSON-LD y tema.   |
+| `src/estilos/global.css`                                                                                   | Sistema visual del diseño: tokens, tipografía, botones. |
+| `src/assets/marca/escudo-d10.jpg`, `anunciante-mar-repuestos.jpg`                                          | Escudo y logo de anunciante, vía `astro:assets`.        |
+| `public/fuentes/archivo-d10.woff2`                                                                         | Archivo variable subseteada (41 KB, OFL).               |
+| `scripts/generar-iconos.mjs`                                                                               | Genera favicons y placa OG. Se corre a mano.            |
+| `scripts/bootstrap-repo.sh`, `.ps1`                                                                        | Arranque del repo según el manual de Scalerics.         |
+| `public/favicon.ico`, `favicon.svg`, `icono-180.png`, `icono-192.png`, `icono-512.png`, `og-noche-d10.png` | Íconos y placa para compartir. **Provisorios.**         |
 
 ## Decisiones que conviene no revertir sin leer esto
 
@@ -179,6 +183,11 @@ Se vuelve a medir antes de cada commit que toque la home.
 ## Datos pendientes del cliente
 
 Todo esto está marcado en el código con `TODO: dato pendiente del cliente`.
+
+0. **Todo `src/datos/maqueta.ts`.** Horario de la cuenta regresiva (martes 21:00, que
+   contradice lo relevado), URL del vivo, número de emisión, bios, roles, momentos,
+   apariciones históricas, "buscados esta semana" y logos de anunciantes. Se muestra en
+   pantalla como placeholder por decisión de Scalerics; se reemplaza bloque por bloque.
 
 1. **Rol de la Dra. Andrea Ramírez Ponzo.** Aparece en el canal pero no sabemos en qué
    segmento. (La conducción —Yessy López, Charly Álvarez, Luis Orpi— quedó confirmada

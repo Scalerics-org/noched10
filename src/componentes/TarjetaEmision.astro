@@ -1,14 +1,14 @@
 ---
 /**
- * Emisión en el archivo.
+ * Emisión en el archivo (diseño 1g / 1h).
  *
- * La misma tarjeta sirve en grilla y en lista: el que cambia es el contenedor,
- * con CSS. Si la tarjeta tuviera dos maquetados distintos, el toggle tendría
- * que re-renderizar HTML en el cliente y ahí empieza a hacer falta JavaScript
- * para algo que es una preferencia visual.
+ * El mismo HTML sirve en lista y en grilla: el contenedor lleva `group` y
+ * `data-vista`, y cada parte se acomoda con variantes group-data-[vista=…].
+ * Si la tarjeta tuviera dos maquetados, el toggle tendría que re-renderizar
+ * HTML en el cliente para algo que es una preferencia visual.
  */
 import { urlDeEmision } from '../datos/archivo';
-import { formatearFecha } from '../datos/texto';
+import { fechaConPuntos } from '../datos/texto';
 
 type Props = {
   fecha: string;
@@ -16,29 +16,87 @@ type Props = {
   duracion: string;
   invitados: string[];
   cantidadDePiezas: number;
+  temas: string[];
+  videoId: string | null;
 };
 
-const { fecha, titulo, duracion, invitados, cantidadDePiezas } = Astro.props;
+const { fecha, titulo, duracion, invitados, cantidadDePiezas, temas, videoId } =
+  Astro.props;
+
+const tema = temas.map((t) => t.charAt(0).toUpperCase() + t.slice(1)).join(' · ');
 ---
 
 <article
-  class="group border-borde bg-superficie hover:border-acento relative flex h-full flex-col border p-5 transition-colors"
+  class="group/tarjeta hover:bg-superficie-alta group-data-[vista=grilla]:bg-superficie group-data-[vista=lista]:border-borde relative transition-colors group-data-[vista=grilla]:border-t-2 group-data-[vista=grilla]:border-t-[var(--color-acento-fuerte)] group-data-[vista=lista]:border-b"
 >
-  <p class="text-texto-suave text-xs tracking-widest uppercase">
-    <time datetime={fecha}>{formatearFecha(fecha)}</time>
-    <span aria-hidden="true"> · </span>{duracion}
-  </p>
-
-  <h2 class="mt-2 leading-snug font-semibold">
-    <a
-      href={urlDeEmision({ fecha })}
-      class="group-hover:text-acento transition-colors after:absolute after:inset-0"
+  <div
+    class="bg-superficie-alta relative hidden aspect-video overflow-hidden group-data-[vista=grilla]:block"
+  >
+    {
+      videoId && (
+        <img
+          src={`https://i.ytimg.com/vi_webp/${videoId}/mqdefault.webp`}
+          alt=""
+          width="320"
+          height="180"
+          loading="lazy"
+          decoding="async"
+          class="h-full w-full object-cover"
+        />
+      )
+    }
+    <span
+      class="bg-negro/85 text-hueso absolute right-2 bottom-2 px-2 py-1 font-mono text-[0.7rem] font-bold"
     >
-      {titulo}
-    </a>
-  </h2>
+      {duracion}
+    </span>
+  </div>
 
-  <p class="text-texto-suave mt-auto pt-3 text-sm">
-    {cantidadDePiezas} piezas · {invitados.join(', ')}
-  </p>
+  <div
+    class="grid gap-x-5 gap-y-1.5 py-3.5 group-data-[vista=grilla]:p-4 group-data-[vista=lista]:grid-cols-[5.5rem_1fr] group-data-[vista=lista]:items-baseline lg:group-data-[vista=lista]:grid-cols-[7.4rem_1fr_10.5rem_9.25rem_4.9rem] lg:group-data-[vista=lista]:px-1.5"
+  >
+    <p
+      class="text-texto-tenue font-mono text-xs group-data-[vista=grilla]:order-3 group-data-[vista=grilla]:text-[0.72rem]"
+    >
+      <time datetime={fecha}>{fechaConPuntos(fecha)}</time>
+    </p>
+
+    <h2
+      class="text-base leading-[1.2] font-extrabold group-data-[vista=grilla]:order-2 group-data-[vista=grilla]:mb-1.5 lg:text-lg group-data-[vista=grilla]:lg:text-[1.05rem]"
+    >
+      <a href={urlDeEmision({ fecha })} class="after:absolute after:inset-0">
+        {titulo}
+      </a>
+      <span
+        class="text-texto-suave mt-1 block text-[0.8rem] font-normal group-data-[vista=grilla]:hidden lg:hidden"
+      >
+        {cantidadDePiezas} piezas · {duracion}
+      </span>
+    </h2>
+
+    <p
+      class="etiqueta text-acento hidden text-[0.66rem] tracking-[0.14em] group-data-[vista=grilla]:order-1 group-data-[vista=grilla]:mb-1.5 group-data-[vista=grilla]:block lg:block"
+    >
+      Programa · {cantidadDePiezas} piezas
+      <span
+        class="text-texto-suave hidden font-normal group-data-[vista=grilla]:inline"
+      >
+        {tema && ` · ${tema}`}
+      </span>
+    </p>
+
+    <p
+      class="text-texto-suave hidden text-[0.8rem] group-data-[vista=grilla]:hidden lg:block"
+    >
+      {tema}
+    </p>
+
+    <p
+      class="text-texto-suave hidden text-right font-mono text-xs group-data-[vista=grilla]:hidden lg:block"
+    >
+      {duracion}
+    </p>
+
+    <p class="sr-only">Con {invitados.join(', ')}</p>
+  </div>
 </article>

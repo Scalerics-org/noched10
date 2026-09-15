@@ -63,64 +63,135 @@ if (filtro.tema) {
     {hoja.urlSiguiente && <link rel="next" href={hoja.urlSiguiente} />}
   </Fragment>
 
-  <div class="contenedor py-12">
-    <h1 class="font-titulo text-[length:var(--text-titulo)] font-black">
-      {titulo}
-    </h1>
-    <p class="text-texto-suave mt-3 max-w-2xl">
-      {hoja.total}
-      {hoja.total === 1 ? ' emisión publicada' : ' emisiones publicadas'} en este sitio. El
-      archivo completo del programa son cerca de {
-        programa.capitulosAprox.toLocaleString('es-UY')
-      } capítulos.
-      {/* TODO: dato pendiente del cliente — el resto del archivo histórico. */}
-    </p>
-
-    <div class="mt-8 grid gap-8 lg:grid-cols-[16rem_1fr]">
-      <aside aria-label="Filtros del archivo">
-        <FiltrosDelArchivo filtro={filtro} />
-      </aside>
-
-      <div>
-        <div class="mb-4 flex flex-wrap items-center justify-between gap-4">
-          <p class="text-texto-suave text-sm" role="status">
-            Mostrando {hoja.items.length} de {hoja.total}
+  <div class="bg-fondo border-borde border-b">
+    <div class="contenedor pt-5.5 pb-4.5 lg:pt-11 lg:pb-7.5">
+      <div
+        class="mb-4 flex flex-wrap items-end justify-between gap-x-10 gap-y-3 lg:mb-6.5"
+      >
+        <div>
+          <p
+            class="etiqueta text-acento mb-3.5 hidden text-[0.7rem] tracking-[0.2em] lg:block"
+          >
+            El archivo · 2010–2026
           </p>
+          <h1 class="placa text-[2.5rem] lg:text-[4.75rem]">{titulo}</h1>
+        </div>
+        <p class="text-texto-suave hidden max-w-[34ch] text-[0.875rem] lg:block">
+          Casi {programa.capitulosAprox.toLocaleString('es-UY')} emisiones y más de{' '}
+          {programa.invitadosAprox.toLocaleString('es-UY')} invitados. Buscá por nombre, filtrá
+          por año y tema, y elegí cómo mirarlo.
+          {/* TODO: dato pendiente del cliente — el resto del archivo histórico. */}
+        </p>
+      </div>
+
+      {/* Búsqueda real: lleva al buscador de Pagefind, sin JS también. */}
+      <form
+        action="/buscar"
+        method="get"
+        class="bg-superficie border-borde mb-3.5 flex min-h-13 items-center border lg:mb-5.5 lg:min-h-17"
+        data-pagefind-ignore
+      >
+        <svg
+          class="text-gris mx-3.5 h-5 w-5 shrink-0 lg:mx-4.5 lg:h-5.5 lg:w-5.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path>
+        </svg>
+        <label for="q-archivo" class="sr-only">Buscar en el archivo</label>
+        <input
+          id="q-archivo"
+          type="search"
+          name="q"
+          placeholder="Buscá a cualquiera de los 6.800 invitados"
+          class="text-texto placeholder:text-texto-tenue min-w-0 flex-1 bg-transparent py-3 text-[0.95rem] lg:text-[1.2rem]"
+        />
+        <button
+          type="submit"
+          class="etiqueta text-texto-suave hover:text-texto border-borde self-stretch border-l px-4 text-[0.72rem] tracking-[0.12em] lg:px-5.5"
+        >
+          Buscar
+        </button>
+      </form>
+
+      <div class="flex flex-wrap items-end gap-6">
+        <FiltrosDelArchivo filtro={filtro} />
+        <div class="ml-auto hidden lg:block">
           <VistaDelArchivo />
         </div>
-
-        {
-          hoja.items.length > 0 ? (
-            <div data-lista-de-emisiones data-vista="lista">
-              {hoja.items.map((emision) => (
-                <TarjetaEmision
-                  fecha={emision.fecha}
-                  titulo={emision.titulo}
-                  duracion={emision.duracion}
-                  invitados={emision.invitados}
-                  cantidadDePiezas={emision.piezas.length}
-                />
-              ))}
-            </div>
-          ) : (
-            <p class="border-borde border p-6">
-              No hay programas con ese filtro.{' '}
-              <a href="/programas" class="text-acento underline underline-offset-4">
-                Ver todo el archivo
-              </a>
-              .
-            </p>
-          )
-        }
-
-        <Paginador
-          pagina={hoja.pagina}
-          totalPaginas={hoja.totalPaginas}
-          urlAnterior={hoja.urlAnterior}
-          urlSiguiente={hoja.urlSiguiente}
-          urlDePagina={(numero) => urlDelArchivo(filtro, numero)}
-        />
       </div>
     </div>
+  </div>
+
+  <div class="bg-banda border-borde border-b">
+    <div
+      class="contenedor flex min-h-13 items-center justify-between gap-3 py-2.5 lg:py-4"
+    >
+      <p class="flex items-baseline gap-3" role="status">
+        <span class="dato text-[1.375rem]">{hoja.total}</span>
+        <span class="etiqueta text-texto-suave text-[0.68rem]">
+          {hoja.total === 1 ? 'emisión en el archivo' : 'emisiones en el archivo'}
+          {hoja.totalPaginas > 1 && ` · página ${hoja.pagina} de ${hoja.totalPaginas}`}
+        </span>
+      </p>
+      <div class="lg:hidden"><VistaDelArchivo compacta /></div>
+    </div>
+  </div>
+
+  <div class="contenedor pb-14">
+    {
+      hoja.items.length > 0 ? (
+        <div
+          data-lista-de-emisiones
+          data-vista="lista"
+          class="group data-[vista=grilla]:pt-8.5"
+        >
+          <div
+            class="border-regla etiqueta text-texto-tenue hidden grid-cols-[7.4rem_1fr_10.5rem_9.25rem_4.9rem] gap-x-5 border-b-2 px-1.5 py-3.5 text-[0.62rem] tracking-[0.18em] lg:group-data-[vista=lista]:grid"
+            aria-hidden="true"
+          >
+            <>
+              <span>Fecha</span>
+              <span>Título</span>
+              <span>Tipo</span>
+              <span>Tema</span>
+            </>
+            <span class="text-right">Duración</span>
+          </div>
+          {hoja.items.map((emision) => (
+            <TarjetaEmision
+              fecha={emision.fecha}
+              titulo={emision.titulo}
+              duracion={emision.duracion}
+              invitados={emision.invitados}
+              cantidadDePiezas={emision.piezas.length}
+              temas={[...new Set(emision.piezas.flatMap((p) => p.temas))]}
+              videoId={emision.videoId}
+            />
+          ))}
+        </div>
+      ) : (
+        <div class="py-20 text-center">
+          <p class="titulo-seccion mb-3.5 text-[2.375rem]">Nada con ese filtro</p>
+          <p class="text-texto-suave mb-5.5">
+            Probá con otro año o mirá el archivo completo sin filtros.
+          </p>
+          <a href="/programas" class="boton boton-primario">
+            Ver todo el archivo
+          </a>
+        </div>
+      )
+    }
+
+    <Paginador
+      pagina={hoja.pagina}
+      totalPaginas={hoja.totalPaginas}
+      urlAnterior={hoja.urlAnterior}
+      urlSiguiente={hoja.urlSiguiente}
+      urlDePagina={(numero) => urlDelArchivo(filtro, numero)}
+    />
   </div>
 </Base>

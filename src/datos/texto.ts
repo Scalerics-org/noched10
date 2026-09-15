@@ -37,6 +37,8 @@ export function comoFecha(iso: string): Date {
 export const formatearFecha = (iso: string) => fechaLarga.format(comoFecha(iso));
 export const formatearFechaCorta = (iso: string) => fechaCorta.format(comoFecha(iso));
 export const formatearDiaYMes = (iso: string) => diaYMes.format(comoFecha(iso));
+/** "2026-08-18" → "18.08.2026", la fecha de placa del sistema visual. */
+export const fechaConPuntos = (iso: string) => iso.split('-').reverse().join('.');
 
 export const anioDe = (iso: string) => Number(iso.slice(0, 4));
 

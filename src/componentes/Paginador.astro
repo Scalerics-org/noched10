@@ -35,12 +35,7 @@ const numeros = Array.from({ length: hasta - desde + 1 }, (_, i) => desde + i);
         href={urlAnterior ?? undefined}
         rel="prev"
         aria-disabled={urlAnterior ? undefined : 'true'}
-        class:list={[
-          'border-borde border px-4 py-2 text-sm transition-colors',
-          urlAnterior
-            ? 'hover:border-acento hover:text-acento'
-            : 'text-texto-suave pointer-events-none opacity-40',
-        ]}
+        class:list={['chip', urlAnterior ? '' : 'pointer-events-none opacity-40']}
       >
         Anterior
       </a>
@@ -48,10 +43,7 @@ const numeros = Array.from({ length: hasta - desde + 1 }, (_, i) => desde + i);
       <ol class="flex flex-wrap gap-1">
         {desde > 1 && (
           <li>
-            <a
-              href={urlDePagina(1)}
-              class="border-borde hover:border-acento block border px-3 py-2 text-sm"
-            >
+            <a href={urlDePagina(1)} class="chip min-w-11 justify-center">
               1
             </a>
           </li>
@@ -61,12 +53,7 @@ const numeros = Array.from({ length: hasta - desde + 1 }, (_, i) => desde + i);
             <a
               href={urlDePagina(numero)}
               aria-current={numero === pagina ? 'page' : undefined}
-              class:list={[
-                'block border px-3 py-2 text-sm transition-colors',
-                numero === pagina
-                  ? 'border-acento bg-acento-fuerte text-sobre-acento font-semibold'
-                  : 'border-borde hover:border-acento',
-              ]}
+              class:list={['chip min-w-11 justify-center', numero === pagina ? '' : '']}
             >
               {numero}
             </a>
@@ -74,10 +61,7 @@ const numeros = Array.from({ length: hasta - desde + 1 }, (_, i) => desde + i);
         ))}
         {hasta < totalPaginas && (
           <li>
-            <a
-              href={urlDePagina(totalPaginas)}
-              class="border-borde hover:border-acento block border px-3 py-2 text-sm"
-            >
+            <a href={urlDePagina(totalPaginas)} class="chip min-w-11 justify-center">
               {totalPaginas}
             </a>
           </li>
@@ -88,12 +72,7 @@ const numeros = Array.from({ length: hasta - desde + 1 }, (_, i) => desde + i);
         href={urlSiguiente ?? undefined}
         rel="next"
         aria-disabled={urlSiguiente ? undefined : 'true'}
-        class:list={[
-          'border-borde border px-4 py-2 text-sm transition-colors',
-          urlSiguiente
-            ? 'hover:border-acento hover:text-acento'
-            : 'text-texto-suave pointer-events-none opacity-40',
-        ]}
+        class:list={['chip', urlSiguiente ? '' : 'pointer-events-none opacity-40']}
       >
         Siguiente
       </a>

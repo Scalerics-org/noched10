@@ -1,22 +1,22 @@
 ---
 /**
- * Ficha de invitado.
+ * Ficha de invitado (diseño 2c): quién es y todas sus apariciones.
  *
  * Es la página más valiosa del sitio para SEO: cada una de las 6.800 personas
- * que pasaron por el estudio es una entidad con nombre propio que hoy no tiene
- * dónde caer. Con el Person de schema.org y la lista de apariciones, el
- * archivo empieza a traer tráfico de cola larga solo.
+ * que pasaron por el estudio es una entidad con nombre propio. El Person de
+ * schema.org se arma SOLO con datos reales; rol, bio y apariciones históricas
+ * de maqueta.ts se muestran en pantalla pero nunca entran al JSON-LD.
  */
 import type { GetStaticPaths } from 'astro';
 import { getCollection, getEntry } from 'astro:content';
 
 import Base from '../../layouts/Base.astro';
-import TarjetaPieza from '../../componentes/TarjetaPieza.astro';
-import { nombresDeInvitados, piezasOrdenadas } from '../../datos/consultas';
-import { urlDeInvitado, urlDelArchivo } from '../../datos/archivo';
+import { invitadosOrdenados, piezasOrdenadas } from '../../datos/consultas';
+import { urlDeInvitado } from '../../datos/archivo';
 import { persona } from '../../datos/esquemas';
 import { sitio } from '../../datos/sitio';
-import { enumerar, formatearFecha } from '../../datos/texto';
+import { anioDe, fechaConPuntos, formatearFecha } from '../../datos/texto';
+import { invitados as invitadosDeMaqueta, minutosPorAnio } from '../../datos/maqueta';
 
 export const getStaticPaths = (async () => {
   const invitados = await getCollection('invitados');
@@ -29,17 +29,69 @@ export const getStaticPaths = (async () => {
 const { id } = Astro.props;
 
 const invitado = (await getEntry('invitados', id))!;
-const nombresDe = await nombresDeInvitados();
+const maqueta = invitadosDeMaqueta[id];
 
-const apariciones = (await piezasOrdenadas()).filter((pieza) =>
+const todas = await piezasOrdenadas();
+const apariciones = todas.filter((pieza) =>
   pieza.data.invitados.some((ref) => ref.id === id),
 );
 
-const fechas = apariciones.map((pieza) => pieza.data.emision.id);
+const etiquetas: Record<string, string> = {
+  entrevista: 'Entrevista',
+  humor: 'Humor',
+  columna: 'Columna',
+  musica: 'Música en vivo',
+};
+const mayuscula = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+
+type Fila = {
+  fecha: string;
+  titulo: string;
+  tipo: string;
+  tema: string;
+  duracion: string;
+  href: string | null;
+};
+
+const filas: Fila[] = [
+  ...apariciones.map((pieza) => ({
+    fecha: pieza.data.emision.id,
+    titulo: pieza.data.titulo,
+    tipo: etiquetas[pieza.data.tipo] ?? pieza.data.tipo,
+    tema: pieza.data.temas[0] ? mayuscula(pieza.data.temas[0]) : '',
+    duracion: pieza.data.duracion,
+    href: `/entrevistas/${pieza.id}`,
+  })),
+  // Texto de maqueta: apariciones anteriores al archivo cargado, sin página.
+  ...(maqueta?.historicas ?? []).map((h) => ({ ...h, href: null })),
+];
+
+const anios = filas.map((f) => anioDe(f.fecha));
+const rango = anios.length
+  ? `${Math.min(...anios)}–${Math.max(...anios)}`.replace(/^(\d+)–\1$/, '$1')
+  : '';
+
+const datos = maqueta?.datos ?? [
+  { valor: String(apariciones.length), etiqueta: 'Apariciones' },
+  { valor: String(Math.min(...anios)), etiqueta: 'Primera vez' },
+];
+
+// Otros invitados del mismo tema, para seguir navegando.
+const temaPrincipal = apariciones[0]?.data.temas[0];
+const conteo = new Map<string, number>();
+for (const pieza of todas) {
+  if (temaPrincipal && !pieza.data.temas.includes(temaPrincipal)) continue;
+  for (const ref of pieza.data.invitados)
+    conteo.set(ref.id, (conteo.get(ref.id) ?? 0) + 1);
+}
+const otros = (await invitadosOrdenados())
+  .filter((otro) => otro.id !== id && conteo.has(otro.id))
+  .slice(0, 4);
+
 const descripcion =
   `${invitado.data.nombre} en Noche D10: ` +
   `${apariciones.length === 1 ? 'una aparición' : `${apariciones.length} apariciones`} ` +
-  `en el archivo del programa${fechas.length ? `, la última el ${formatearFecha(fechas[0])}` : ''}.`;
+  `en el archivo del programa${apariciones[0] ? `, la última el ${formatearFecha(apariciones[0].data.emision.id)}` : ''}.`;
 
 const base = Astro.site ?? new URL(sitio.url);
 const grafo = [
@@ -57,6 +109,8 @@ const grafo = [
     base,
   ),
 ];
+
+const columnas = 'lg:grid-cols-[7.4rem_1fr_11.9rem_9.4rem_4.9rem]';
 ---
 
 <Base
@@ -68,80 +122,206 @@ const grafo = [
     { nombre: invitado.data.nombre, ruta: urlDeInvitado(invitado.data.nombre) },
   ]}
 >
-  <article class="contenedor py-12">
-    {
-      invitado.data.rol && (
-        <p class="text-acento text-xs font-semibold tracking-widest uppercase">
-          {invitado.data.rol}
-        </p>
-      )
-    }
-
-    <h1
-      class="font-titulo mt-3 text-[length:var(--text-titulo)] leading-tight font-black"
-    >
-      {invitado.data.nombre}
-    </h1>
-
-    {
-      invitado.data.bio ? (
-        <p class="mt-4 max-w-2xl">{invitado.data.bio}</p>
-      ) : (
-        /* TODO: dato pendiente del cliente — bios de los invitados. */
-        <p class="text-texto-suave mt-4 max-w-2xl">{descripcion}</p>
-      )
-    }
-
-    {
-      invitado.data.temas.length > 0 && (
-        <p class="text-texto-suave mt-4 text-sm">
-          Temas:{' '}
-          {invitado.data.temas.map((tema, i) => (
-            <>
-              {i > 0 && ', '}
-              <a
-                href={urlDelArchivo({ tema })}
-                class="text-acento capitalize underline underline-offset-4"
-              >
-                {tema}
-              </a>
-            </>
-          ))}
-        </p>
-      )
-    }
-
-    <section class="mt-12" aria-labelledby="apariciones">
-      <h2
-        id="apariciones"
-        class="font-titulo text-[length:var(--text-grande)] font-black"
+  <section class="bg-fondo border-borde border-b" aria-labelledby="nombre">
+    <div class="lg:contenedor grid lg:grid-cols-[30rem_1fr] lg:px-0">
+      {/* TODO: dato pendiente del cliente — retrato del invitado (B/N, 4:5). */}
+      <div
+        class="bg-superficie-alta border-borde aspect-[4/3] lg:aspect-[4/5] lg:border-r"
+        aria-hidden="true"
       >
-        {
-          apariciones.length === 1
-            ? 'Su paso por Noche D10'
-            : 'Sus apariciones en Noche D10'
-        }
-      </h2>
-      <p class="text-texto-suave mt-2 text-sm">
-        {enumerar(fechas.map(formatearFecha))}
-      </p>
+      </div>
 
-      <ul class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div
+        class="flex flex-col px-[var(--gutter)] pt-6 pb-8 lg:px-10 lg:pt-11.5 lg:pb-10"
+      >
+        <p class="etiqueta text-acento mb-3 text-[0.66rem] tracking-[0.2em] lg:mb-4.5">
+          Invitado del archivo
+        </p>
+        <h1 id="nombre" class="placa mb-3.5 text-[3rem] lg:text-[6rem]">
+          {invitado.data.nombre}
+        </h1>
         {
-          apariciones.map((pieza) => (
-            <li class="relative">
-              <TarjetaPieza
-                titulo={pieza.data.titulo}
-                tipo={pieza.data.tipo}
-                duracion={pieza.data.duracion}
-                fecha={pieza.data.emision.id}
-                invitados={nombresDe(pieza.data.invitados)}
-                temas={pieza.data.temas}
-              />
+          (maqueta?.rol ?? invitado.data.rol) && (
+            <p class="text-acento-vivo mb-5 text-[1.05rem] lg:mb-6.5 lg:text-[1.2rem]">
+              {maqueta?.rol ?? invitado.data.rol}
+            </p>
+          )
+        }
+
+        {
+          (maqueta?.bio.length
+            ? maqueta.bio
+            : invitado.data.bio
+              ? [invitado.data.bio]
+              : []
+          ).map((parrafo, i) => (
+            <p
+              class:list={[
+                'mb-3.5 max-w-[56ch] text-pretty',
+                i === 0
+                  ? 'text-[1rem] leading-[1.7] lg:text-[1.03rem]'
+                  : 'text-texto-suave text-[0.94rem] leading-[1.7]',
+              ]}
+            >
+              {parrafo}
+            </p>
+          ))
+        }
+
+        <dl
+          class="border-borde bg-borde mt-5 grid grid-cols-2 gap-0.5 border lg:mt-auto lg:grid-cols-4"
+        >
+          {
+            datos.map((dato) => (
+              <div class="bg-superficie px-4.5 py-5">
+                <dd class="dato mb-2 text-[3rem] leading-[0.9]">{dato.valor}</dd>
+                <dt class="etiqueta text-texto-tenue text-[0.62rem] tracking-[0.14em]">
+                  {dato.etiqueta}
+                </dt>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="bg-fondo" aria-labelledby="apariciones">
+    <div class="contenedor pt-9 lg:pt-11">
+      <div
+        class="border-regla mb-1.5 flex flex-wrap items-end justify-between gap-3 border-b-2 pb-3.5"
+      >
+        <h2 id="apariciones" class="titulo-seccion text-[1.875rem] lg:text-[2.5rem]">
+          Todas sus apariciones
+        </h2>
+        <span class="text-texto-suave text-[0.8rem]">
+          {filas.length}
+          {filas.length === 1 ? 'pieza' : 'piezas'}{rango && ` · ${rango}`}
+        </span>
+      </div>
+
+      <ol>
+        {
+          filas.map((fila) => (
+            <li
+              class:list={[
+                'border-borde relative grid grid-cols-[5.5rem_1fr] items-baseline gap-x-5.5 gap-y-1 border-b px-1.5 py-3.5 transition-colors',
+                columnas,
+                fila.href && 'hover:bg-texto/5',
+              ]}
+            >
+              <span class="text-texto-tenue font-mono text-[0.78rem]">
+                <time datetime={fila.fecha}>{fechaConPuntos(fila.fecha)}</time>
+              </span>
+              <span class="text-[1rem] leading-[1.2] font-extrabold lg:text-lg">
+                {fila.href ? (
+                  <a href={fila.href} class="after:absolute after:inset-0">
+                    {fila.titulo}
+                  </a>
+                ) : (
+                  fila.titulo
+                )}
+              </span>
+              <span class="etiqueta text-acento col-start-2 text-[0.66rem] tracking-[0.14em] lg:col-start-auto">
+                {fila.tipo}
+              </span>
+              <span class="text-texto-suave hidden text-[0.8rem] lg:block">
+                {fila.tema}
+              </span>
+              <span class="text-texto-suave hidden text-right font-mono text-[0.78rem] lg:block">
+                {fila.duracion}
+              </span>
             </li>
           ))
         }
-      </ul>
-    </section>
-  </article>
+      </ol>
+
+      {
+        maqueta?.historicas && (
+          <figure class="border-borde mt-10 border-t pt-5.5" aria-hidden="true">
+            <div class="flex h-19 items-end gap-1.25">
+              {minutosPorAnio.map((altura, i) => (
+                <span
+                  class:list={[
+                    'crece flex-1',
+                    altura <= 8
+                      ? 'bg-superficie-alta'
+                      : i < 11
+                        ? 'bg-rojo'
+                        : i < 14
+                          ? 'bg-rojo-claro'
+                          : 'bg-brasa',
+                  ]}
+                  style={`height:${altura}%`}
+                />
+              ))}
+            </div>
+            <figcaption class="mt-2.5 flex justify-between gap-4">
+              <span class="etiqueta text-texto-tenue text-[0.68rem] tracking-[0.14em]">
+                2010
+              </span>
+              <span class="text-texto-tenue hidden text-[0.72rem] sm:inline">
+                una barra por año · la altura son los minutos al aire
+              </span>
+              <span class="etiqueta text-acento text-[0.68rem] tracking-[0.14em]">
+                2026
+              </span>
+            </figcaption>
+          </figure>
+        )
+      }
+    </div>
+  </section>
+
+  {
+    otros.length > 0 && (
+      <section class="bg-banda border-borde mt-11 border-t" aria-labelledby="otros">
+        <div class="contenedor py-9 lg:py-12">
+          <div class="border-regla mb-6.5 flex flex-wrap items-end justify-between gap-3 border-b-2 pb-3.5">
+            <h2 id="otros" class="titulo-seccion text-[1.875rem] lg:text-[2.375rem]">
+              Otros invitados{temaPrincipal && ` de ${temaPrincipal}`}
+            </h2>
+            <a
+              href="/invitados"
+              class="etiqueta text-acento hover:text-texto text-[0.75rem] tracking-[0.12em]"
+            >
+              Ver los 6.800 →
+            </a>
+          </div>
+          <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+            {otros.map((otro) => {
+              const ficha = invitadosDeMaqueta[otro.id];
+              return (
+                <li class="bg-superficie hover:bg-superficie-alta relative flex items-center gap-3.5 p-4 transition-colors">
+                  <div
+                    class="bg-superficie-alta h-22.5 w-18.5 shrink-0"
+                    aria-hidden="true"
+                  />
+                  <div class="min-w-0">
+                    <h3 class="mb-1.5 text-lg leading-[1.1] font-extrabold">
+                      <a
+                        href={`/invitados/${otro.id}`}
+                        class="after:absolute after:inset-0"
+                      >
+                        {otro.data.nombre}
+                      </a>
+                    </h3>
+                    {(ficha?.rol ?? otro.data.rol) && (
+                      <p class="text-texto-suave mb-2 text-xs">
+                        {ficha?.rol ?? otro.data.rol}
+                      </p>
+                    )}
+                    <p class="etiqueta text-acento text-[0.66rem] tracking-[0.14em]">
+                      {otro.data.apariciones}{' '}
+                      {otro.data.apariciones === 1 ? 'aparición' : 'apariciones'}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </section>
+    )
+  }
 </Base>
