@@ -1,0 +1,20 @@
+---
+/** Archivo filtrado sólo por tema, con su paginación. */
+import type { GetStaticPaths } from 'astro';
+import ListadoDelArchivo from '../../../componentes/ListadoDelArchivo.astro';
+import { urlDelArchivo, vistasDelArchivo } from '../../../datos/archivo';
+
+export const getStaticPaths = (() =>
+  vistasDelArchivo()
+    .filter((vista) => vista.filtro.tema && !vista.filtro.anio)
+    .map((vista) => ({
+      params: {
+        ruta: urlDelArchivo(vista.filtro, vista.pagina).replace('/programas/tema/', ''),
+      },
+      props: { filtro: vista.filtro, pagina: vista.pagina },
+    }))) satisfies GetStaticPaths;
+
+const { filtro, pagina } = Astro.props;
+---
+
+<ListadoDelArchivo filtro={filtro} pagina={pagina} />

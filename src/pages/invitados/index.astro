@@ -1,0 +1,87 @@
+---
+/** Índice de invitados, agrupado por inicial para poder recorrerlo. */
+import Base from '../../layouts/Base.astro';
+import { invitadosOrdenados } from '../../datos/consultas';
+import { urlDeInvitado } from '../../datos/archivo';
+import { programa } from '../../datos/programa';
+
+const invitados = await invitadosOrdenados();
+
+const porInicial = new Map<string, typeof invitados>();
+for (const invitado of invitados) {
+  // La inicial se saca del nombre normalizado: si no, 'Á' y 'A' caen en
+  // grupos distintos y el índice queda con dos letras A.
+  const inicial = invitado.data.nombre
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')[0]
+    .toUpperCase();
+  porInicial.set(inicial, [...(porInicial.get(inicial) ?? []), invitado]);
+}
+const grupos = [...porInicial.entries()].sort((a, b) => a[0].localeCompare(b[0], 'es'));
+---
+
+<Base
+  titulo="Invitados"
+  descripcion={`Las personas que pasaron por Noche D10. Más de ${programa.invitadosAprox.toLocaleString('es-UY')} invitados en ${programa.aniosAlAire} años.`}
+  migasDePan={[{ nombre: 'Invitados', ruta: '/invitados' }]}
+  buscable={false}
+>
+  <div class="contenedor py-12">
+    <h1 class="font-titulo text-[length:var(--text-titulo)] font-black">Invitados</h1>
+    <p class="text-texto-suave mt-3 max-w-2xl">
+      {
+        /*
+        "Casi 6.877 invitados" es el número que dio la prensa y es
+        sospechosamente preciso. Hasta que el cliente lo confirme se muestra
+        redondeado para abajo.
+        TODO: dato pendiente del cliente — el total real de invitados.
+      */
+      }
+      Por el estudio pasaron más de {programa.invitadosAprox.toLocaleString('es-UY')}
+      personas en {programa.aniosAlAire} años. Estas son las que ya están cargadas en el archivo
+      del sitio.
+    </p>
+
+    <nav class="mt-8 flex flex-wrap gap-2" aria-label="Saltar a una letra">
+      {
+        grupos.map(([inicial]) => (
+          <a
+            href={`#letra-${inicial}`}
+            class="border-borde hover:border-acento hover:text-acento block border px-3 py-1.5 text-sm transition-colors"
+          >
+            {inicial}
+          </a>
+        ))
+      }
+    </nav>
+
+    {
+      grupos.map(([inicial, delGrupo]) => (
+        <section class="mt-10" aria-labelledby={`letra-${inicial}`}>
+          <h2
+            id={`letra-${inicial}`}
+            class="font-titulo text-acento border-borde border-b pb-2 text-2xl font-black"
+          >
+            {inicial}
+          </h2>
+          <ul class="mt-4 grid gap-x-6 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
+            {delGrupo.map((invitado) => (
+              <li>
+                <a
+                  href={urlDeInvitado(invitado.data.nombre)}
+                  class="hover:text-acento transition-colors"
+                >
+                  {invitado.data.nombre}
+                  <span class="text-texto-suave text-sm">
+                    {' '}
+                    ({invitado.data.apariciones})
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))
+    }
+  </div>
+</Base>

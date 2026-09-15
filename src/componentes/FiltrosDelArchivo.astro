@@ -1,0 +1,81 @@
+---
+/**
+ * Filtros del archivo, por año y por tema.
+ *
+ * Son LINKS a rutas pre-renderizadas, no un <form> con query params, y eso es
+ * a propósito. El sitio es estático: `?anio=2026` no puede cambiar lo que
+ * devuelve el servidor porque no hay servidor, así que con JS apagado un form
+ * GET recargaría el mismo HTML sin filtrar — o sea, un filtro roto.
+ *
+ * Con rutas reales el filtro funciona con JS apagado, se puede compartir, se
+ * cachea y Google lo indexa, que es justo lo que no hace con query params.
+ */
+import { anios, temasConPiezas, urlDelArchivo, type Filtro } from '../datos/archivo';
+
+type Props = { filtro: Filtro };
+
+const { filtro } = Astro.props;
+
+const grupos = [
+  {
+    titulo: 'Año',
+    items: [
+      {
+        texto: 'Todos',
+        activo: !filtro.anio,
+        href: urlDelArchivo({ tema: filtro.tema }),
+      },
+      ...anios.map((anio) => ({
+        texto: String(anio),
+        activo: filtro.anio === anio,
+        href: urlDelArchivo({ anio, tema: filtro.tema }),
+      })),
+    ],
+  },
+  {
+    titulo: 'Tema',
+    items: [
+      {
+        texto: 'Todos',
+        activo: !filtro.tema,
+        href: urlDelArchivo({ anio: filtro.anio }),
+      },
+      ...temasConPiezas.map((tema) => ({
+        texto: tema,
+        activo: filtro.tema === tema,
+        href: urlDelArchivo({ anio: filtro.anio, tema }),
+      })),
+    ],
+  },
+];
+---
+
+<div class="border-borde bg-superficie border p-5" data-pagefind-ignore>
+  {
+    grupos.map((grupo) => (
+      <div class="mt-5 first:mt-0">
+        <h2 class="text-texto-suave text-xs font-semibold tracking-widest uppercase">
+          {grupo.titulo}
+        </h2>
+        <ul class="mt-3 flex flex-wrap gap-2">
+          {grupo.items.map((item) => (
+            <li>
+              <a
+                href={item.href}
+                aria-current={item.activo ? 'true' : undefined}
+                class:list={[
+                  'block border px-3 py-1.5 text-sm capitalize transition-colors',
+                  item.activo
+                    ? 'border-acento bg-acento-fuerte text-sobre-acento font-semibold'
+                    : 'border-borde hover:border-acento',
+                ]}
+              >
+                {item.texto}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ))
+  }
+</div>

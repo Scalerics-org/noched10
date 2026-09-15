@@ -2,42 +2,138 @@
 import '../estilos/global.css';
 import Cabezal from '../componentes/Cabezal.astro';
 import PieDePagina from '../componentes/PieDePagina.astro';
+import DatosEstructurados from '../componentes/DatosEstructurados.astro';
 import { sitio } from '../datos/sitio';
+import { migas, organizacion, paginaWeb, serie } from '../datos/esquemas';
 
 type Props = {
   titulo: string;
   descripcion?: string;
+  /** Ruta de la imagen OG de esta página. Cae en la genérica del sitio. */
+  imagen?: string;
+  /** Bloques JSON-LD propios de la página. */
+  grafo?: Record<string, unknown>[];
+  /** Migas de pan, sin contar "Inicio", que se agrega solo. */
+  migasDePan?: { nombre: string; ruta: string }[];
+  /** El buscador no se indexa: es una página sin contenido propio. */
+  noIndexar?: boolean;
+  /**
+   * Si esta página entra al índice de Pagefind. Las páginas de listado quedan
+   * afuera a propósito: repiten el contenido de las fichas y, si entraran,
+   * cada búsqueda devolvería primero el archivo entero en vez de la entrevista
+   * que se está buscando.
+   */
+  buscable?: boolean;
+  tipoOg?: 'website' | 'article' | 'video.episode';
 };
 
-const { titulo, descripcion = sitio.descripcion } = Astro.props;
-const canonical = new URL(Astro.url.pathname, Astro.site ?? sitio.url);
+const {
+  titulo,
+  descripcion = sitio.descripcion,
+  imagen = sitio.imagenOg,
+  grafo = [],
+  migasDePan = [],
+  noIndexar = false,
+  buscable = true,
+  tipoOg = 'website',
+} = Astro.props;
+
+const base = Astro.site ?? new URL(sitio.url);
+const canonical = new URL(Astro.url.pathname, base);
+const imagenAbsoluta = new URL(imagen, base);
+const tituloCompleto =
+  Astro.url.pathname === '/'
+    ? `${sitio.nombre} · ${sitio.bajada}`
+    : `${titulo} · ${sitio.nombre}`;
+
+// El grafo del sitio va en todas las páginas: la serie y la productora son las
+// entidades que atan todo lo demás.
+const grafoCompleto = [
+  ...serie(base),
+  organizacion(base),
+  paginaWeb(base),
+  migas([{ nombre: 'Inicio', ruta: '/' }, ...migasDePan], base),
+  ...grafo,
+];
 ---
 
 <!doctype html>
-<html lang={sitio.idioma} class="scroll-smooth">
+<html lang={sitio.idioma}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{titulo} · {sitio.nombre}</title>
+
+    <title>{tituloCompleto}</title>
     <meta name="description" content={descripcion} />
     <link rel="canonical" href={canonical.href} />
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content={`${titulo} · ${sitio.nombre}`} />
+    {noIndexar && <meta name="robots" content="noindex, follow" />}
+
+    <meta property="og:type" content={tipoOg} />
+    <meta property="og:site_name" content={sitio.nombre} />
+    <meta property="og:title" content={tituloCompleto} />
     <meta property="og:description" content={descripcion} />
+    <meta property="og:url" content={canonical.href} />
+    <meta property="og:image" content={imagenAbsoluta.href} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:locale" content="es_UY" />
-    <!-- TODO: favicon e imagen OG cuando el cliente pase el logo en vectorial. -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={tituloCompleto} />
+    <meta name="twitter:description" content={descripcion} />
+    <meta name="twitter:image" content={imagenAbsoluta.href} />
+
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icono-180.png" />
+    <link rel="manifest" href="/manifiesto.webmanifest" />
+    <meta name="theme-color" content="#0a0a0a" />
+
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={sitio.nombre}
+      href="/rss.xml"
+    />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    {
+      /*
+      El tema se aplica ANTES de pintar. Si esto fuera un módulo diferido, la
+      página arrancaría en oscuro y saltaría a claro a mitad de carga: eso es
+      un flash blanco y encima cuenta como cambio de layout.
+    */
+    }
+    <script is:inline>
+      try {
+        const tema = localStorage.getItem('noched10:tema');
+        if (tema === 'light' || tema === 'dark') {
+          document.documentElement.dataset.theme = tema;
+        }
+      } catch {
+        /* Sin localStorage manda prefers-color-scheme, que ya está en el CSS. */
+      }
+    </script>
+
+    <DatosEstructurados grafo={grafoCompleto} />
+
+    {/* Metadatos propios de la página: rel prev/next del archivo, por ejemplo. */}
+    <slot name="cabeza" />
   </head>
-  <body class="bg-negro text-hueso font-texto antialiased">
+
+  <body class="bg-fondo text-texto font-texto antialiased">
     <a
       href="#contenido"
-      class="focus:bg-rojo sr-only focus:not-sr-only focus:px-4 focus:py-2"
+      class="bg-acento-fuerte text-sobre-acento sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:px-4 focus:py-2"
     >
       Ir al contenido
     </a>
+
     <Cabezal />
-    <main id="contenido">
+
+    <main id="contenido" data-pagefind-body={buscable ? '' : undefined}>
       <slot />
     </main>
+
     <PieDePagina />
   </body>
 </html>

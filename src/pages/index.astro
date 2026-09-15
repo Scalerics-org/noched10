@@ -1,48 +1,103 @@
 ---
+import { emisionesOrdenadas, nombresDeInvitados, piezasDe } from '../datos/consultas';
+
 import Base from '../layouts/Base.astro';
 import FachadaYoutube from '../componentes/FachadaYoutube.astro';
-import { emisiones } from '../datos/emisiones';
+import TarjetaPieza from '../componentes/TarjetaPieza.astro';
+import { sitio } from '../datos/sitio';
 import { plataformas, trayectoria } from '../datos/programa';
+import { argumentos } from '../datos/anunciantes';
+import { urlDeEmision } from '../datos/archivo';
+import { episodio } from '../datos/esquemas';
+import { formatearFecha } from '../datos/texto';
 
-const [ultima, ...anteriores] = emisiones;
-const destacadas = ultima.piezas
-  .filter((pieza) => pieza.tipo === 'entrevista')
-  .slice(0, 3);
-const formatoFecha = new Intl.DateTimeFormat('es-UY', { dateStyle: 'long' });
+const emisiones = await emisionesOrdenadas();
+const ultima = emisiones[0];
+
+const deLaUltima = await piezasDe(ultima);
+const destacadas = deLaUltima.filter((p) => p.data.tipo === 'entrevista').slice(0, 3);
+const humor = deLaUltima.find((p) => p.data.tipo === 'humor');
+
+const nombresDe = await nombresDeInvitados();
+const nombresDeLaUltima = nombresDe(ultima.data.invitados);
+
+const base = Astro.site ?? new URL(sitio.url);
+const grafo = [
+  episodio(
+    {
+      fecha: ultima.data.fecha,
+      numero: ultima.data.numero,
+      titulo: ultima.data.titulo,
+      duracion: ultima.data.duracion,
+      descripcion: ultima.data.descripcion,
+      videoId: ultima.data.videoId,
+      invitados: nombresDeLaUltima,
+    },
+    base,
+  ),
+];
 ---
 
-<Base titulo="Inicio">
-  <!-- Hero: el último programa completo. Carátula, no autoplay: el poster es
-       el elemento LCP y un video acá lo manda a 5 segundos. -->
-  <section class="mx-auto max-w-6xl px-4 py-12">
-    <p class="text-rojo-claro text-xs font-semibold tracking-widest uppercase">
-      Último programa · {formatoFecha.format(new Date(ultima.fecha))}
+<Base titulo="Inicio" grafo={grafo}>
+  {
+    /*
+    Hero del último programa. La miniatura es el elemento LCP: por eso va con
+    fetchpriority alta y sin diferir, y por eso el video no arranca solo.
+  */
+  }
+  <section class="contenedor py-12 lg:py-16">
+    <p class="text-acento text-xs font-semibold tracking-widest uppercase">
+      Último programa · <time datetime={ultima.data.fecha}>
+        {formatearFecha(ultima.data.fecha)}
+      </time>
     </p>
-    <h1 class="font-titulo mt-3 text-4xl leading-tight font-black sm:text-6xl">
-      {ultima.titulo}
+
+    <h1
+      class="font-titulo mt-3 max-w-4xl text-[length:var(--text-titulo)] leading-[1.05] font-black"
+    >
+      {ultima.data.titulo}
     </h1>
-    <div class="mt-6 max-w-3xl">
+
+    <p class="text-texto-suave mt-4 max-w-2xl">{ultima.data.descripcion}</p>
+
+    <div class="mt-8 max-w-4xl">
       <FachadaYoutube
-        videoId={ultima.videoEstreno ?? ultima.videoEnVivo}
-        titulo={ultima.titulo}
+        videoId={ultima.data.videoId}
+        titulo={ultima.data.titulo}
+        prioridad
       />
     </div>
+
+    <p class="mt-6 flex flex-wrap gap-3">
+      <a
+        href={urlDeEmision(ultima.data)}
+        class="bg-acento-fuerte text-sobre-acento px-5 py-3 text-sm font-semibold hover:opacity-90"
+      >
+        Ver el programa completo
+      </a>
+      <a
+        href="/programas"
+        class="border-borde hover:border-acento border px-5 py-3 text-sm font-semibold"
+      >
+        Todo el archivo
+      </a>
+    </p>
   </section>
 
-  <!-- Franja de trayectoria. Los números son el activo narrativo más fuerte
-       que tiene la marca. -->
-  <section class="border-humo bg-carbon border-y">
-    <dl class="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-3">
+  {/* Franja de números: es el activo narrativo más fuerte que tiene la marca. */}
+  <section class="border-borde bg-superficie border-y" aria-labelledby="trayectoria">
+    <h2 id="trayectoria" class="sr-only">Trayectoria del programa</h2>
+    <dl class="contenedor grid gap-8 py-12 sm:grid-cols-3">
       {
         trayectoria.map((dato) => (
-          <div>
+          <div class="aparece">
             <dt class="sr-only">{dato.detalle}</dt>
             <dd>
-              <span class="font-titulo text-rojo-claro block text-5xl font-black">
+              <span class="font-titulo text-acento block text-[length:var(--text-titulo)] leading-none font-black">
                 {dato.valor}
               </span>
-              <span class="mt-1 block text-lg font-semibold">{dato.unidad}</span>
-              <span class="text-gris mt-1 block text-sm">{dato.detalle}</span>
+              <span class="mt-2 block text-lg font-semibold">{dato.unidad}</span>
+              <span class="text-texto-suave mt-1 block text-sm">{dato.detalle}</span>
             </dd>
           </div>
         ))
@@ -50,58 +105,151 @@ const formatoFecha = new Intl.DateTimeFormat('es-UY', { dateStyle: 'long' });
     </dl>
   </section>
 
-  <section class="mx-auto max-w-6xl px-4 py-12">
-    <h2 class="font-titulo text-2xl font-black">Entrevistas de la última emisión</h2>
-    <ul class="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+  {/* Tres entrevistas destacadas. */}
+  <section class="contenedor py-14" aria-labelledby="destacadas">
+    <div class="flex flex-wrap items-baseline justify-between gap-4">
+      <h2
+        id="destacadas"
+        class="font-titulo text-[length:var(--text-grande)] font-black"
+      >
+        Entrevistas destacadas
+      </h2>
+      <a href="/entrevistas" class="text-acento text-sm underline underline-offset-4">
+        Ver todas las entrevistas
+      </a>
+    </div>
+
+    <ul class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {
         destacadas.map((pieza) => (
-          <li class="border-humo bg-carbon border p-5">
-            <p class="text-gris text-xs tracking-widest uppercase">
-              {pieza.temas.join(' · ') || 'Entrevista'}
+          <li class="aparece relative">
+            <TarjetaPieza
+              titulo={pieza.data.titulo}
+              tipo={pieza.data.tipo}
+              duracion={pieza.data.duracion}
+              fecha={ultima.data.fecha}
+              invitados={nombresDe(pieza.data.invitados)}
+              temas={pieza.data.temas}
+            />
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  {/* Bloque de humor: Las Humoradas de Luis Orpi son marca registrada del programa. */}
+  {
+    humor && (
+      <section class="border-borde bg-superficie border-y" aria-labelledby="humor">
+        <div class="contenedor grid items-center gap-8 py-14 lg:grid-cols-2">
+          <div>
+            <p class="text-acento text-xs font-semibold tracking-widest uppercase">
+              El bloque de humor
             </p>
-            <h3 class="mt-2 leading-snug font-semibold">{pieza.titulo}</h3>
-          </li>
-        ))
-      }
-    </ul>
-  </section>
+            <h2
+              id="humor"
+              class="font-titulo mt-3 text-[length:var(--text-grande)] leading-tight font-black"
+            >
+              Las Humoradas de Luis Orpi
+            </h2>
+            <p class="text-texto-suave mt-4">{humor.data.resumen}</p>
+            <p class="mt-6">
+              <a
+                href={`/entrevistas/${humor.id}`}
+                class="border-borde hover:border-acento inline-block border px-5 py-3 text-sm font-semibold"
+              >
+                Ver el segmento
+              </a>
+            </p>
+          </div>
+          <div class="aparece">
+            <FachadaYoutube videoId={humor.data.videoId} titulo={humor.data.titulo} />
+          </div>
+        </div>
+      </section>
+    )
+  }
 
-  <section class="mx-auto max-w-6xl px-4 py-12">
-    <h2 class="font-titulo text-2xl font-black">Programas anteriores</h2>
-    <ul class="divide-humo border-humo mt-6 divide-y border-y">
-      {
-        anteriores.slice(0, 5).map((emision) => (
-          <li class="flex flex-wrap items-baseline justify-between gap-2 py-4">
-            <span class="font-medium">{emision.titulo}</span>
-            <span class="text-gris text-sm">
-              <time datetime={emision.fecha}>
-                {formatoFecha.format(new Date(emision.fecha))}
-              </time>
-            </span>
-          </li>
-        ))
-      }
-    </ul>
-    <p class="mt-6">
-      <a href="/programas" class="text-rojo-claro underline underline-offset-4">
-        Ver todo el archivo
-      </a>
+  {/* Buscador. El form es GET y sin JS: sirve para llegar a /buscar igual. */}
+  <section class="contenedor py-14" aria-labelledby="buscador">
+    <h2 id="buscador" class="font-titulo text-[length:var(--text-grande)] font-black">
+      Buscá en 16 años de archivo
+    </h2>
+    <p class="text-texto-suave mt-3 max-w-2xl">
+      Por nombre de invitado, por tema o por lo que se dijo. Son casi 3.000 programas y
+      más de 6.800 personas que pasaron por el estudio.
     </p>
+
+    <form action="/buscar" method="get" class="mt-6 flex max-w-xl flex-wrap gap-2">
+      <label for="q" class="sr-only">Buscar en el archivo de Noche D10</label>
+      <input
+        type="search"
+        id="q"
+        name="q"
+        placeholder="Por ejemplo: Robert Silva"
+        class="border-borde bg-fondo text-texto placeholder:text-texto-suave min-w-0 flex-1 border px-4 py-3"
+      />
+      <button
+        type="submit"
+        class="bg-acento-fuerte text-sobre-acento px-5 py-3 text-sm font-semibold hover:opacity-90"
+      >
+        Buscar
+      </button>
+    </form>
   </section>
 
-  <section class="border-humo bg-carbon border-t">
-    <div class="mx-auto max-w-6xl px-4 py-12">
-      <h2 class="font-titulo text-2xl font-black">Dónde vernos y escucharnos</h2>
+  {/* Dónde vernos. */}
+  <section class="border-borde bg-superficie border-y" aria-labelledby="donde">
+    <div class="contenedor py-14">
+      <h2 id="donde" class="font-titulo text-[length:var(--text-grande)] font-black">
+        Dónde vernos y escucharnos
+      </h2>
       <ul class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {
           plataformas.map((plataforma) => (
-            <li class="border-humo border p-5">
+            <li class="border-borde aparece border p-5">
               <p class="font-semibold">{plataforma.nombre}</p>
-              <p class="text-gris mt-1 text-sm">{plataforma.detalle}</p>
+              <p class="text-texto-suave mt-1 text-sm">{plataforma.detalle}</p>
             </li>
           ))
         }
       </ul>
+      <p class="mt-6">
+        <a
+          href="/donde-vernos"
+          class="text-acento text-sm underline underline-offset-4"
+        >
+          Cómo sintonizarnos en cada plataforma
+        </a>
+      </p>
     </div>
+  </section>
+
+  {/* Anunciantes: la sección que le paga el programa al cliente. */}
+  <section class="contenedor py-14" aria-labelledby="anunciantes">
+    <h2
+      id="anunciantes"
+      class="font-titulo text-[length:var(--text-grande)] font-black"
+    >
+      Anunciá en Noche D10
+    </h2>
+    <ul class="mt-6 grid gap-6 sm:grid-cols-3">
+      {
+        argumentos.map((argumento) => (
+          <li class="aparece">
+            <h3 class="text-acento font-semibold">{argumento.titulo}</h3>
+            <p class="text-texto-suave mt-2 text-sm">{argumento.detalle}</p>
+          </li>
+        ))
+      }
+    </ul>
+    <p class="mt-8">
+      <a
+        href="/anunciantes"
+        class="bg-acento-fuerte text-sobre-acento inline-block px-5 py-3 text-sm font-semibold hover:opacity-90"
+      >
+        Pedir el kit de pauta
+      </a>
+    </p>
   </section>
 </Base>

@@ -1,47 +1,100 @@
 ---
 /**
- * Fachada de YouTube: miniatura + botón que recién al click inyecta el iframe.
- * Embeber el iframe directo son ~900 KB y decenas de requests de terceros
- * antes de que nadie haya apretado play. Esto no se cambia.
+ * Fachada de YouTube.
+ *
+ * El iframe de YouTube son ~900 KB y decenas de requests a dominios de
+ * terceros ANTES de que nadie haya apretado play. En una home con un video
+ * arriba eso se come el presupuesto entero y manda el LCP a más de 5 s. Acá
+ * se pinta una miniatura y el iframe se inyecta recién en el click.
+ *
+ * Esto no se cambia por conveniencia: es la regla 6 del proyecto.
+ *
+ * Miniaturas, en orden de preferencia:
+ * 1. Una imagen local pasada por `miniatura`: la procesa astro:assets y sale
+ *    en AVIF, que es el formato más liviano y el que pide el presupuesto.
+ * 2. El `vi_webp` de i.ytimg.com. YouTube no sirve AVIF, así que WebP es lo
+ *    mejor disponible sin tener el archivo local.
+ * 3. El jpg de i.ytimg.com como último recurso.
+ *
+ * TODO: dato pendiente del cliente — las portadas de los capítulos, para
+ * poder servirlas locales en AVIF y dejar de pegarle a i.ytimg.com.
  */
+import { Picture } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
 type Props = {
   videoId: string | null;
   titulo: string;
+  /** Portada local. Si viene, gana y se sirve en AVIF. */
+  miniatura?: ImageMetadata;
+  /** La primera imagen visible de la página no se difiere. */
+  prioridad?: boolean;
 };
 
-const { videoId, titulo } = Astro.props;
-const miniatura = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : null;
+const { videoId, titulo, miniatura, prioridad = false } = Astro.props;
 ---
 
-<div class="bg-humo relative aspect-video w-full overflow-hidden" data-fachada>
+<div
+  class="bg-superficie border-borde relative aspect-video w-full overflow-hidden border"
+  data-fachada
+>
   {
-    videoId ? (
+    videoId || miniatura ? (
       <>
-        <img
-          src={miniatura}
-          alt=""
-          width="480"
-          height="360"
-          loading="lazy"
-          class="h-full w-full object-cover"
-        />
-        <button
-          type="button"
-          data-play
-          data-video={videoId}
-          class="bg-negro/40 hover:bg-negro/20 absolute inset-0 grid place-items-center transition"
-        >
-          <span class="sr-only">Reproducir: {titulo}</span>
-          <span
-            class="bg-rojo grid h-16 w-16 place-items-center rounded-full text-2xl"
-            aria-hidden="true"
+        {miniatura ? (
+          <Picture
+            src={miniatura}
+            formats={['avif', 'webp']}
+            alt=""
+            widths={[480, 960, 1280]}
+            sizes="(min-width: 64rem) 60rem, 100vw"
+            loading={prioridad ? 'eager' : 'lazy'}
+            fetchpriority={prioridad ? 'high' : 'auto'}
+            decoding={prioridad ? 'sync' : 'async'}
+            class="h-full w-full object-cover"
+          />
+        ) : (
+          <picture>
+            <source
+              srcset={`https://i.ytimg.com/vi_webp/${videoId}/maxresdefault.webp`}
+              type="image/webp"
+            />
+            <img
+              src={`https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`}
+              alt=""
+              width="1280"
+              height="720"
+              loading={prioridad ? 'eager' : 'lazy'}
+              fetchpriority={prioridad ? 'high' : 'auto'}
+              decoding={prioridad ? 'sync' : 'async'}
+              class="h-full w-full object-cover"
+            />
+          </picture>
+        )}
+
+        {videoId ? (
+          <button
+            type="button"
+            data-play
+            data-video={videoId}
+            data-titulo={titulo}
+            class="group bg-negro/35 hover:bg-negro/15 focus-visible:bg-negro/15 absolute inset-0 grid w-full place-items-center transition-colors"
           >
-            ▶
-          </span>
-        </button>
+            <span class="sr-only">Reproducir: {titulo}</span>
+            <span
+              class="bg-acento-fuerte grid h-16 w-16 place-items-center rounded-full shadow-lg transition-transform group-hover:scale-110"
+              aria-hidden="true"
+            >
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="#f4f3ef">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </span>
+          </button>
+        ) : null}
       </>
     ) : (
-      <p class="text-gris grid h-full place-items-center p-4 text-center text-sm">
+      /* TODO: dato pendiente del cliente — los videoId del canal. */
+      <p class="text-texto-suave grid h-full place-items-center p-4 text-center text-sm">
         Video pendiente de cargar
       </p>
     )
@@ -49,19 +102,30 @@ const miniatura = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : 
 </div>
 
 <script>
-  document.querySelectorAll<HTMLButtonElement>('[data-play]').forEach((boton) => {
-    boton.addEventListener('click', () => {
-      const contenedor = boton.closest('[data-fachada]');
-      const video = boton.dataset.video;
-      if (!contenedor || !video) return;
+  /**
+   * Un solo listener delegado en el documento en vez de uno por fachada: con
+   * doce tarjetas en el archivo la diferencia es real, y además sigue
+   * funcionando si alguna fachada se agrega después.
+   */
+  document.addEventListener('click', (evento) => {
+    const boton = (evento.target as HTMLElement).closest<HTMLButtonElement>(
+      '[data-play]',
+    );
+    if (!boton) return;
 
-      const marco = document.createElement('iframe');
-      marco.src = `https://www.youtube-nocookie.com/embed/${video}?autoplay=1`;
-      marco.title = boton.textContent?.trim() ?? 'Video';
-      marco.allow = 'accelerometer; autoplay; encrypted-media; picture-in-picture';
-      marco.allowFullscreen = true;
-      marco.className = 'h-full w-full border-0';
-      contenedor.replaceChildren(marco);
-    });
+    const contenedor = boton.closest('[data-fachada]');
+    const video = boton.dataset.video;
+    if (!contenedor || !video) return;
+
+    const marco = document.createElement('iframe');
+    // youtube-nocookie: no deja cookies de seguimiento hasta que hay play.
+    const parametros = new URLSearchParams({ autoplay: '1', rel: '0' });
+    marco.src = `https://www.youtube-nocookie.com/embed/${video}?${parametros}`;
+    marco.title = boton.dataset.titulo ?? 'Video de Noche D10';
+    marco.allow =
+      'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+    marco.allowFullscreen = true;
+    marco.className = 'h-full w-full border-0';
+    contenedor.replaceChildren(marco);
   });
 </script>

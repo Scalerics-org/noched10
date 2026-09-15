@@ -7,16 +7,27 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ### Agregado
 
+- Lint con ESLint (typescript-eslint + eslint-plugin-astro) dentro de `npm run verify`.
+
 - Andamiaje inicial: Astro 7 estático, Tailwind 4, TypeScript, sitemap.
 - Piso mínimo de archivos según el manual de arranque de Scalerics.
 - Datos del cliente relevados en `src/datos/`.
-- Ingesta automática del canal de YouTube: parser de títulos en `src/dominio/`
-  con 19 tests, script `traer-feed.ts` y workflow que corre miércoles y viernes.
-- Curaduría a mano en `src/datos/curaduria.ts`, que pisa lo que trae el feed.
+- Modelo de contenido con content collections y schema de Zod: `emisiones`,
+  `piezas` e `invitados`, cargadas desde `src/datos/`.
+- Sistema de tokens de marca con tema claro y oscuro, toggle `data-theme`
+  persistido y escala tipográfica fluida.
+- Home completa, archivo de programas con paginación real y filtros por año y
+  tema que funcionan sin JavaScript.
+- Páginas de emisión, pieza e invitado, con navegación cruzada.
+- Fachada de YouTube: el iframe se inyecta recién al click.
+- Buscador con Pagefind, indexado en el build.
+- SEO: JSON-LD de serie, episodio, video, persona y migas; sitemap, robots,
+  RSS, `llms.txt`, canonical, OG por página y favicons.
+- Páginas `/equipo`, `/donde-vernos`, `/anunciantes`, `/contacto` y 404.
+- README con la estructura real de archivos y la lista de datos pendientes.
 
-### Corregido
+### Pendiente de confirmar con el cliente
 
-- El horario de emisión: el programa sale en vivo los jueves y se reestrena los
-  martes, no al revés. Las dos publicaciones son una sola emisión.
-- La conducción: Yessy López, Charly Álvarez y Luis Orpi, confirmado contra las
-  descripciones del canal.
+Ver la lista completa al final del README. Lo más urgente: quién conduce hoy
+—hay dos versiones que no coinciden—, los `videoId` de YouTube y a dónde se
+envían las consultas de pauta.

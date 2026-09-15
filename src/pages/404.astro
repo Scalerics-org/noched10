@@ -1,0 +1,60 @@
+---
+import Base from '../layouts/Base.astro';
+import { emisionesOrdenadas } from '../datos/consultas';
+import { urlDeEmision } from '../datos/archivo';
+import { formatearFecha } from '../datos/texto';
+
+// Una 404 sin salida es una visita perdida. Se ofrecen las últimas emisiones
+// y el buscador, que es lo que la persona estaba intentando encontrar.
+const ultimas = (await emisionesOrdenadas()).slice(0, 4);
+---
+
+<Base titulo="Página no encontrada" noIndexar buscable={false}>
+  <div class="contenedor max-w-[var(--ancho-lectura)] py-16">
+    <p class="text-acento text-xs font-semibold tracking-widest uppercase">Error 404</p>
+    <h1 class="font-titulo mt-3 text-[length:var(--text-titulo)] font-black">
+      Esta página no existe
+    </h1>
+    <p class="text-texto-suave mt-4">
+      Puede que el enlace esté viejo o que la dirección tenga un error. El archivo del
+      programa sigue estando entero.
+    </p>
+
+    <p class="mt-8 flex flex-wrap gap-3">
+      <a
+        href="/programas"
+        class="bg-acento-fuerte text-sobre-acento px-5 py-3 text-sm font-semibold hover:opacity-90"
+      >
+        Ir al archivo
+      </a>
+      <a
+        href="/buscar"
+        class="border-borde hover:border-acento border px-5 py-3 text-sm font-semibold"
+      >
+        Buscar
+      </a>
+    </p>
+
+    <section class="mt-14" aria-labelledby="ultimas">
+      <h2 id="ultimas" class="font-titulo text-[length:var(--text-grande)] font-black">
+        Últimos programas
+      </h2>
+      <ul class="divide-borde border-borde mt-4 divide-y border-y">
+        {
+          ultimas.map((emision) => (
+            <li class="py-4">
+              <a href={urlDeEmision(emision.data)} class="hover:text-acento">
+                <span class="text-texto-suave block text-xs tracking-widest uppercase">
+                  <time datetime={emision.data.fecha}>
+                    {formatearFecha(emision.data.fecha)}
+                  </time>
+                </span>
+                <span class="mt-1 block font-semibold">{emision.data.titulo}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+  </div>
+</Base>

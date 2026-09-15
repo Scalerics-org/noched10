@@ -1,0 +1,126 @@
+---
+/**
+ * Cuerpo del archivo: encabezado, filtros, listado paginado y paginador.
+ *
+ * Lo usan las cuatro rutas del archivo (todo, por página, por año y por tema)
+ * para que las cuatro se vean y se comporten igual. Si cada ruta maquetara lo
+ * suyo, en dos semanas habría cuatro archivos distintos.
+ */
+import Base from '../layouts/Base.astro';
+import TarjetaEmision from './TarjetaEmision.astro';
+import FiltrosDelArchivo from './FiltrosDelArchivo.astro';
+import VistaDelArchivo from './VistaDelArchivo.astro';
+import Paginador from './Paginador.astro';
+import {
+  paginar,
+  filtrar,
+  tituloDelArchivo,
+  urlDelArchivo,
+  type Filtro,
+} from '../datos/archivo';
+import { programa } from '../datos/programa';
+
+type Props = { filtro: Filtro; pagina: number };
+
+const { filtro, pagina } = Astro.props;
+
+const resultados = filtrar(filtro);
+const hoja = paginar(resultados, pagina, filtro);
+const titulo = tituloDelArchivo(filtro);
+
+const sufijo =
+  hoja.totalPaginas > 1 ? ` (página ${hoja.pagina} de ${hoja.totalPaginas})` : '';
+const descripcion =
+  `${titulo} de Noche D10${sufijo}. Archivo de ${programa.aniosAlAire} años de ` +
+  `entrevistas, música en vivo y humor.`;
+
+const migasDePan = [{ nombre: 'Programas', ruta: '/programas' }];
+if (filtro.anio) {
+  migasDePan.push({
+    nombre: String(filtro.anio),
+    ruta: urlDelArchivo({ anio: filtro.anio }),
+  });
+}
+if (filtro.tema) {
+  migasDePan.push({ nombre: filtro.tema, ruta: urlDelArchivo(filtro) });
+}
+---
+
+<Base
+  titulo={`${titulo}${sufijo}`}
+  descripcion={descripcion}
+  migasDePan={migasDePan}
+  buscable={false}
+>
+  {
+    /*
+    rel prev/next para que Google entienda que las páginas son una serie y no
+    contenido duplicado.
+  */
+  }
+  <Fragment slot="cabeza">
+    {hoja.urlAnterior && <link rel="prev" href={hoja.urlAnterior} />}
+    {hoja.urlSiguiente && <link rel="next" href={hoja.urlSiguiente} />}
+  </Fragment>
+
+  <div class="contenedor py-12">
+    <h1 class="font-titulo text-[length:var(--text-titulo)] font-black">
+      {titulo}
+    </h1>
+    <p class="text-texto-suave mt-3 max-w-2xl">
+      {hoja.total}
+      {hoja.total === 1 ? ' emisión publicada' : ' emisiones publicadas'} en este sitio. El
+      archivo completo del programa son cerca de {
+        programa.capitulosAprox.toLocaleString('es-UY')
+      } capítulos.
+      {/* TODO: dato pendiente del cliente — el resto del archivo histórico. */}
+    </p>
+
+    <div class="mt-8 grid gap-8 lg:grid-cols-[16rem_1fr]">
+      <aside aria-label="Filtros del archivo">
+        <FiltrosDelArchivo filtro={filtro} />
+      </aside>
+
+      <div>
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-4">
+          <p class="text-texto-suave text-sm" role="status">
+            Mostrando {hoja.items.length} de {hoja.total}
+          </p>
+          <VistaDelArchivo />
+        </div>
+
+        {
+          hoja.items.length > 0 ? (
+            <div data-lista-de-emisiones data-vista="lista">
+              {hoja.items.map((emision) => (
+                <TarjetaEmision
+                  fecha={emision.fecha}
+                  titulo={emision.titulo}
+                  duracion={emision.duracion}
+                  invitados={emision.invitados}
+                  cantidadDePiezas={emision.piezas.length}
+                />
+              ))}
+            </div>
+          ) : (
+            <p class="border-borde border p-6">
+              No hay programas con ese filtro.{' '}
+              <a href="/programas" class="text-acento underline underline-offset-4">
+                Ver todo el archivo
+              </a>
+              .
+            </p>
+          )
+        }
+
+        <Paginador
+          pagina={hoja.pagina}
+          totalPaginas={hoja.totalPaginas}
+          urlAnterior={hoja.urlAnterior}
+          urlSiguiente={hoja.urlSiguiente}
+          urlDePagina={(numero) => urlDelArchivo(filtro, numero)}
+        />
+      </div>
+    </div>
+  </div>
+</Base>

@@ -1,0 +1,80 @@
+---
+/** Todas las piezas del archivo, con filtro por tipo vía rutas reales. */
+import Base from '../../layouts/Base.astro';
+import TarjetaPieza from '../../componentes/TarjetaPieza.astro';
+import { nombresDeInvitados, piezasOrdenadas } from '../../datos/consultas';
+
+const piezas = await piezasOrdenadas();
+const nombresDe = await nombresDeInvitados();
+
+const entrevistas = piezas.filter((pieza) => pieza.data.tipo === 'entrevista');
+const otras = piezas.filter((pieza) => pieza.data.tipo !== 'entrevista');
+---
+
+<Base
+  titulo="Entrevistas"
+  descripcion="Todas las entrevistas, columnas, segmentos de humor y momentos musicales publicados de Noche D10."
+  migasDePan={[{ nombre: 'Entrevistas', ruta: '/entrevistas' }]}
+  buscable={false}
+>
+  <div class="contenedor py-12">
+    <h1 class="font-titulo text-[length:var(--text-titulo)] font-black">Entrevistas</h1>
+    <p class="text-texto-suave mt-3 max-w-2xl">
+      Cada emisión se publica entera y también partida por segmento. Acá están los
+      segmentos sueltos, que es como la mayoría de la gente llega al programa desde una
+      búsqueda.
+    </p>
+
+    <section class="mt-10" aria-labelledby="entrevistas">
+      <h2
+        id="entrevistas"
+        class="font-titulo text-[length:var(--text-grande)] font-black"
+      >
+        Entrevistas ({entrevistas.length})
+      </h2>
+      <ul class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {
+          entrevistas.map((pieza) => (
+            <li class="relative">
+              <TarjetaPieza
+                titulo={pieza.data.titulo}
+                tipo={pieza.data.tipo}
+                duracion={pieza.data.duracion}
+                fecha={pieza.data.emision.id}
+                invitados={nombresDe(pieza.data.invitados)}
+                temas={pieza.data.temas}
+              />
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    {
+      otras.length > 0 && (
+        <section class="mt-14" aria-labelledby="otras">
+          <h2
+            id="otras"
+            class="font-titulo text-[length:var(--text-grande)] font-black"
+          >
+            Humor, columnas y música ({otras.length})
+          </h2>
+          <ul class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {otras.map((pieza) => (
+              <li class="relative">
+                <TarjetaPieza
+                  titulo={pieza.data.titulo}
+                  tipo={pieza.data.tipo}
+                  duracion={pieza.data.duracion}
+                  fecha={pieza.data.emision.id}
+                  invitados={nombresDe(pieza.data.invitados)}
+                  temas={pieza.data.temas}
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+  </div>
+</Base>

@@ -1,0 +1,80 @@
+---
+/**
+ * Toggle de tema.
+ *
+ * El default es oscuro; el sistema puede pedir claro y el visitante puede
+ * pisar las dos cosas. La elección se guarda en localStorage envuelto en
+ * try/catch porque en navegación privada o con cookies bloqueadas el acceso
+ * tira excepción y, sin el catch, se lleva puesto el resto del script.
+ */
+---
+
+<button
+  type="button"
+  id="cambio-de-tema"
+  class="border-borde text-texto-suave hover:text-texto hover:border-acento grid h-9 w-9 place-items-center rounded-full border transition-colors"
+  aria-pressed="false"
+>
+  <span class="sr-only">Cambiar entre tema claro y oscuro</span>
+  <svg
+    aria-hidden="true"
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+  >
+    <circle cx="12" cy="12" r="4"></circle>
+    <path
+      d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"
+    ></path>
+  </svg>
+</button>
+
+<script>
+  const CLAVE = 'noched10:tema';
+
+  function leer(): string | null {
+    try {
+      return localStorage.getItem(CLAVE);
+    } catch {
+      return null;
+    }
+  }
+
+  function guardar(tema: string) {
+    try {
+      localStorage.setItem(CLAVE, tema);
+    } catch {
+      /* Sin almacenamiento el tema dura lo que dura la página. No es un error. */
+    }
+  }
+
+  function temaActual(): string {
+    const elegido = document.documentElement.dataset.theme;
+    if (elegido) return elegido;
+    return matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }
+
+  function sincronizar(boton: HTMLButtonElement) {
+    boton.setAttribute('aria-pressed', String(temaActual() === 'light'));
+  }
+
+  const boton = document.getElementById('cambio-de-tema') as HTMLButtonElement | null;
+  if (boton) {
+    sincronizar(boton);
+    boton.addEventListener('click', () => {
+      const proximo = temaActual() === 'light' ? 'dark' : 'light';
+      document.documentElement.dataset.theme = proximo;
+      guardar(proximo);
+      sincronizar(boton);
+    });
+  }
+
+  // Si el visitante nunca eligió, se sigue al sistema en vivo.
+  matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+    if (!leer() && boton) sincronizar(boton);
+  });
+</script>

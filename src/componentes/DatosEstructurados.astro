@@ -1,0 +1,19 @@
+---
+/**
+ * Bloque JSON-LD. Los objetos se arman en src/datos/esquemas.ts; acá sólo se
+ * serializan, envueltos en un @graph para que los @id se crucen entre sí.
+ *
+ * set:html en vez de interpolación: Astro escaparía las comillas y Google
+ * leería el bloque como texto, no como datos.
+ */
+type Props = { grafo: Record<string, unknown>[] };
+
+const { grafo } = Astro.props;
+
+const json = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@graph': grafo,
+});
+---
+
+<script type="application/ld+json" is:inline set:html={json} />

@@ -31,35 +31,23 @@ Todavía no hay dominio, ni contrato firmado, ni material del cliente.
    crítica, < 40 KB de JS, LCP < 2,5 s, CLS < 0,1.
 6. Nunca embeber el iframe de YouTube directo. Va siempre por `FachadaYoutube.astro`.
 7. No inventar datos del cliente. Lo que falta va con `TODO:` y se pregunta.
-8. `feed.json` lo escribe el script, nunca una persona. Toda corrección a mano
-   va en `src/datos/curaduria.ts`, que lo pisa.
 
 ## Trampas del dominio
 
 - **Cada programa se publica DOS VECES y es una sola emisión.** Sale en vivo un
-  jueves y se reestrena el martes siguiente, con dos videos y dos fechas distintas
-  en el título. `emisiones.ts` los fusiona y deja la fecha del vivo. Si alguien saca
-  esa fusión, el archivo muestra todo duplicado.
-- **El canal usa cinco formatos de título y dos separadores distintos** — la barra
-  `|` y una `l` minúscula, que a ojo son iguales. Están todos en
-  `src/dominio/feed.ts` con su caso de prueba. Formato nuevo: primero el test,
-  después el parser, nunca un parche en la página.
-- **Las entrevistas sueltas no dicen a qué emisión pertenecen.** Se cuelgan de la
-  emisión más cercana dentro de 10 días. Es una heurística: cuando se equivoca, se
-  corrige en `curaduria.emisionPorVideo`.
-- **El feed de YouTube devuelve solo las últimas 15 entradas.** Mantiene el sitio al
-  día de acá en adelante, pero no trae los 496 videos que ya están publicados. El
-  archivo viejo hay que cargarlo una vez por otra vía; el script agrega y nunca
-  borra, así que no lo pisa.
+  jueves y se reestrena el martes siguiente, con dos videos distintos. En
+  `emisiones.ts` la fecha de la emisión es la del estreno (martes) y `videoId` es el
+  del estreno: no cargar el video del vivo como otra emisión.
 - **Una emisión no es un video, son cuatro.** Cada programa genera el completo (~2 h),
   una entrevista por invitado, el segmento de humor y a veces una columna. Si se
   modela como "lista de videos" se pierde toda la navegación. El modelo correcto está
   en `src/datos/emisiones.ts`.
-- **El horario que dicen las descripciones se contradice.** Una entrevista dice
-  "jueves 13 de agosto de 2026, 22:00 horas"; otras arrastran un texto pegado que
-  dice "Lunes a viernes 19 hs", que parece de otro programa de la casa. En
-  `programa.ts` está marcado con `horarioConfirmado: false`. No publicar un horario
-  hasta que el cliente lo confirme.
+- **El horario de emisión no está confirmado.** Una descripción del canal dice jueves
+  22:00; otras arrastran "Lunes a viernes 19 hs". En `programa.ts` va con
+  `horarioConfirmado: false` y ninguna página ni el JSON-LD publican la hora hasta
+  que el cliente la confirme.
+- **La sincronización automática con YouTube es etapa 2.** Existió un ingestor del
+  feed y se sacó a propósito; los `videoId` se cargan a mano en `emisiones.ts`.
 - **"Casi 6.877 invitados" es el número que dio la prensa.** Es sospechosamente
   preciso. Hasta que el cliente lo confirme se muestra "más de 6.800".
 - **El archivo tiene 3.000 capítulos: nada de infinite scroll.** Mata el footer, donde
@@ -72,10 +60,7 @@ Todavía no hay dominio, ni contrato firmado, ni material del cliente.
 ```bash
 npm install
 npm run dev        # http://localhost:4321
-npm test           # tests del parser de títulos, sin levantar nada
-npm run feed       # trae el feed del canal y actualiza src/datos/feed.json
-npm run feed -- --ver   # muestra qué traería, sin escribir
-npm run verify     # format:check + check + test + build — lo mismo que CI
+npm run verify     # format:check + lint + astro check + build — lo mismo que CI
 npm run build      # genera dist/
 npx wrangler deploy
 ```
@@ -84,31 +69,13 @@ npx wrangler deploy
 
 ```
 src/
-  dominio/      # funciones puras: el parser de títulos del canal + sus tests
-  datos/        # feed.json (lo escribe el script) + curaduria.ts (a mano)
+  datos/        # el dominio: todo dato y texto del programa
   componentes/  # piezas de UI
   layouts/      # Base.astro
   pages/        # una ruta por archivo (nombre impuesto por Astro)
   estilos/      # global.css con los tokens de marca
-herramientas/   # traer-feed.ts: el adaptador que habla con YouTube
 public/         # estático servido tal cual
 ```
-
-## Cómo entra un programa nuevo
-
-El canal publica, y de ahí sale todo. El workflow `traer-feed.yml` corre los
-miércoles y viernes a las 12:00 UTC (09:00 de Montevideo), o sea la mañana
-siguiente a cada pase:
-
-1. `npm run feed` trae el feed y clasifica lo nuevo con `src/dominio/feed.ts`.
-2. Si hay piezas nuevas, las agrega a `src/datos/feed.json` y las commitea.
-3. Ese commit dispara el deploy.
-
-Lo que el parser no sabe clasificar no se descarta: queda listado en
-`feed.json` bajo `sinClasificar` y el script lo imprime, para que alguien mire
-y agregue el formato.
-
-Nadie del lado del cliente toca nada: publican en YouTube como siempre.
 
 El brief completo del cliente — investigación, arquitectura, referencias de diseño y
 los prompts de Claude Design — está en `../brief-d10.md`, fuera del repo.

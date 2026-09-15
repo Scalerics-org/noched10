@@ -1,0 +1,204 @@
+---
+/**
+ * Anunciantes.
+ *
+ * Es la página que genera plata: el archivo trae la visita y esto la
+ * convierte. Por eso el formulario es real —etiquetas asociadas, validación
+ * del navegador sin JavaScript, autocomplete, mensajes de error entendibles—
+ * y no un bloque decorativo.
+ *
+ * Lo que NO se inventa: precios, y a dónde se envía el formulario. Un precio
+ * publicado que el cliente no fijó es un problema comercial, y un `action`
+ * inventado pierde consultas sin que nadie se entere.
+ */
+import Base from '../layouts/Base.astro';
+import { argumentos, camposDelFormulario, formatos } from '../datos/anunciantes';
+import { destinoDeFormularios } from '../datos/contacto';
+import { plataformas, programa, trayectoria } from '../datos/programa';
+---
+
+<Base
+  titulo="Anunciantes"
+  descripcion={`Pauta publicitaria en Noche D10: ${programa.aniosAlAire} años al aire, radio AM, televisión abierta, cables del interior y YouTube en una sola pauta.`}
+  migasDePan={[{ nombre: 'Anunciantes', ruta: '/anunciantes' }]}
+>
+  <section class="contenedor py-12">
+    <p class="text-acento text-xs font-semibold tracking-widest uppercase">
+      Pauta publicitaria
+    </p>
+    <h1
+      class="font-titulo mt-3 max-w-3xl text-[length:var(--text-titulo)] leading-tight font-black"
+    >
+      Tu marca, en cuatro pantallas al mismo tiempo
+    </h1>
+    <p class="mt-4 max-w-2xl text-lg">
+      Radio AM, televisión abierta, la red de cables del interior y YouTube. Una sola
+      pauta cubre Montevideo y el interior, y queda publicada.
+    </p>
+
+    <dl class="border-borde mt-10 grid gap-8 border-y py-8 sm:grid-cols-3">
+      {
+        trayectoria.map((dato) => (
+          <div>
+            <dt class="sr-only">{dato.detalle}</dt>
+            <dd>
+              <span class="font-titulo text-acento block text-4xl font-black">
+                {dato.valor}
+              </span>
+              <span class="mt-1 block font-semibold">{dato.unidad}</span>
+              <span class="text-texto-suave mt-1 block text-sm">{dato.detalle}</span>
+            </dd>
+          </div>
+        ))
+      }
+    </dl>
+  </section>
+
+  <section class="contenedor pb-12" aria-labelledby="porque">
+    <h2 id="porque" class="font-titulo text-[length:var(--text-grande)] font-black">
+      Por qué Noche D10
+    </h2>
+    <ul class="mt-6 grid gap-6 sm:grid-cols-3">
+      {
+        argumentos.map((argumento) => (
+          <li class="aparece">
+            <h3 class="text-acento font-semibold">{argumento.titulo}</h3>
+            <p class="text-texto-suave mt-2 text-sm">{argumento.detalle}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section class="border-borde bg-superficie border-y" aria-labelledby="formatos">
+    <div class="contenedor py-12">
+      <h2 id="formatos" class="font-titulo text-[length:var(--text-grande)] font-black">
+        Formatos disponibles
+      </h2>
+
+      <ul class="mt-8 grid gap-4 sm:grid-cols-2">
+        {
+          formatos.map((formato) => (
+            <li class="border-borde bg-fondo border p-6">
+              <h3 class="text-lg font-semibold">{formato.nombre}</h3>
+              <p class="text-texto-suave mt-2 text-sm">{formato.descripcion}</p>
+
+              <p class="text-texto-suave mt-4 text-xs tracking-widest uppercase">
+                Sale en
+              </p>
+              <ul class="mt-2 flex flex-wrap gap-2">
+                {formato.alcance.map((donde) => (
+                  <li class="border-borde border px-2 py-1 text-xs">{donde}</li>
+                ))}
+              </ul>
+
+              <p class="mt-4 text-sm">
+                {formato.precio ? (
+                  <strong class="font-semibold">{formato.precio}</strong>
+                ) : (
+                  /* TODO: dato pendiente del cliente — tarifario. */
+                  <span class="text-texto-suave">
+                    Tarifa a confirmar según campaña.
+                  </span>
+                )}
+              </p>
+            </li>
+          ))
+        }
+      </ul>
+
+      <p class="text-texto-suave mt-6 max-w-2xl text-sm">
+        Se emite por {plataformas.map((p) => p.nombre).join(', ')}.
+      </p>
+    </div>
+  </section>
+
+  <section class="contenedor py-14" aria-labelledby="consulta">
+    <div class="max-w-[var(--ancho-lectura)]">
+      <h2 id="consulta" class="font-titulo text-[length:var(--text-grande)] font-black">
+        Pedinos el kit de pauta
+      </h2>
+      <p class="text-texto-suave mt-3">
+        Contanos qué necesitás y te mandamos los formatos, las tarifas y la
+        disponibilidad de las próximas emisiones.
+      </p>
+
+      {
+        destinoDeFormularios.action ? (
+          <form
+            action={destinoDeFormularios.action}
+            method={destinoDeFormularios.method}
+            class="mt-8 grid gap-5"
+          >
+            {camposDelFormulario.map((campo) => (
+              <p class="grid gap-2">
+                <label for={campo.nombre} class="text-sm font-semibold">
+                  {campo.etiqueta}
+                  {campo.requerido ? (
+                    <span class="text-acento"> *</span>
+                  ) : (
+                    <span class="text-texto-suave font-normal"> (opcional)</span>
+                  )}
+                </label>
+                <input
+                  type={campo.tipo}
+                  id={campo.nombre}
+                  name={campo.nombre}
+                  required={campo.requerido}
+                  autocomplete={campo.autocomplete}
+                  class="border-borde bg-fondo text-texto border px-4 py-3"
+                />
+              </p>
+            ))}
+
+            <p class="grid gap-2">
+              <label for="mensaje" class="text-sm font-semibold">
+                Qué necesitás <span class="text-acento">*</span>
+              </label>
+              <textarea
+                id="mensaje"
+                name="mensaje"
+                rows="5"
+                required
+                class="border-borde bg-fondo text-texto border px-4 py-3"
+              />
+            </p>
+
+            <p>
+              <button
+                type="submit"
+                class="bg-acento-fuerte text-sobre-acento px-6 py-3 font-semibold hover:opacity-90"
+              >
+                Enviar la consulta
+              </button>
+            </p>
+            <p class="text-texto-suave text-sm">
+              Los campos con <span class="text-acento">*</span> son obligatorios.
+            </p>
+          </form>
+        ) : (
+          /*
+            Sin destino confirmado NO se pinta un formulario: uno que postea a
+            un endpoint inventado se traga las consultas de pauta en silencio,
+            que es justo lo contrario de lo que esta página tiene que hacer.
+            TODO: dato pendiente del cliente — correo de pauta o endpoint de
+            envío. Con eso, el formulario de arriba se enciende solo.
+          */
+          <div class="border-acento bg-superficie mt-8 border-l-4 p-6">
+            <p class="font-semibold">El formulario todavía no está conectado.</p>
+            <p class="text-texto-suave mt-2 text-sm">
+              Falta definir con el programa a qué correo llegan las consultas de pauta.
+              Hasta entonces no publicamos un formulario que pueda perder una consulta
+              sin avisar.
+            </p>
+            <p class="mt-4">
+              <a href="/contacto" class="text-acento underline underline-offset-4">
+                Ver las vías de contacto disponibles
+              </a>
+            </p>
+          </div>
+        )
+      }
+    </div>
+  </section>
+</Base>

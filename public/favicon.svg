@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#0a0a0a"/>
+  <rect x="0" y="0" width="512" height="28" fill="#c8102e"/>
+  <text x="256" y="300" text-anchor="middle" font-family="Helvetica, Arial, sans-serif"
+        font-weight="bold" font-size="210" fill="#f4f3ef" letter-spacing="-8">D10</text>
+  <text x="256" y="372" text-anchor="middle" font-family="Helvetica, Arial, sans-serif"
+        font-weight="bold" font-size="58" fill="#c8102e" letter-spacing="10">NOCHE</text>
+</svg>
