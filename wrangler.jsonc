@@ -10,6 +10,8 @@
     "directory": "./dist",
     // Sin barra final: /programas sirve directo, sin el 307.
     "html_handling": "drop-trailing-slash",
+    // Las rutas que no existen sirven dist/404.html con status 404, no en blanco.
+    "not_found_handling": "404-page",
   },
   "observability": { "enabled": true },
 }

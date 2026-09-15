@@ -5,8 +5,9 @@
  */
 export const sitio = {
   nombre: 'Noche D10',
-  // TODO: dominio pendiente de definir y comprar con el cliente.
-  url: 'http://localhost:4321',
+  // Dirección provisoria de Cloudflare hasta que el cliente defina el dominio.
+  // TODO: dato pendiente del cliente — el dominio definitivo.
+  url: 'https://noched10.scalerics.workers.dev',
   /** Bajada corta: va en el <title> de la home y en el manifiesto. */
   bajada: 'Magazine uruguayo de entrevistas, música en vivo y humor',
   descripcion:

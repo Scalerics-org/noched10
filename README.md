@@ -212,4 +212,4 @@ Todo esto está marcado en el código con `TODO: dato pendiente del cliente`.
 12. **Bios y fotos** de invitados y equipo.
 13. **Las portadas de los capítulos**, para servirlas locales en AVIF.
 14. **Material de los 16 años**, para la página `/16-anos` (hoy fuera de la navegación).
-15. **El dominio**, para reemplazar `localhost` en `src/datos/sitio.ts`.
+15. **El dominio**, para reemplazar la dirección provisoria `noched10.scalerics.workers.dev` en `src/datos/sitio.ts`.
