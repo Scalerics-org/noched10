@@ -240,17 +240,16 @@ const columnas = 'lg:grid-cols-[7.4rem_1fr_11.9rem_9.4rem_4.9rem]';
         maqueta?.historicas && (
           <figure class="border-borde mt-10 border-t pt-5.5" aria-hidden="true">
             <div class="flex h-19 items-end gap-1.25">
-              {minutosPorAnio.map((altura, i) => (
+              {minutosPorAnio.map(([altura, color]) => (
                 <span
                   class:list={[
                     'crece flex-1',
-                    altura <= 8
-                      ? 'bg-superficie-alta'
-                      : i < 11
-                        ? 'bg-rojo'
-                        : i < 14
-                          ? 'bg-rojo-claro'
-                          : 'bg-brasa',
+                    {
+                      piso: 'bg-superficie-alta',
+                      rojo: 'bg-rojo',
+                      vivo: 'bg-rojo-claro',
+                      brasa: 'bg-brasa',
+                    }[color],
                   ]}
                   style={`height:${altura}%`}
                 />
@@ -285,7 +284,7 @@ const columnas = 'lg:grid-cols-[7.4rem_1fr_11.9rem_9.4rem_4.9rem]';
               href="/invitados"
               class="etiqueta text-acento hover:text-texto text-[0.75rem] tracking-[0.12em]"
             >
-              Ver los 6.800 →
+              Ver el índice completo →
             </a>
           </div>
           <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">

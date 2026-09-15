@@ -140,10 +140,10 @@ export const invitados: Record<string, InvitadoDeMaqueta> = {
     rol: 'Senador · Partido Colorado',
     bio: [
       'Abogado y docente. Fue presidente del CODICEN y vicepresidente de la ' +
-        'República. Vino al programa tres veces desde 2019.',
+        'República. Vino al programa dos veces desde 2019.',
     ],
     datos: [
-      { valor: '3', etiqueta: 'Apariciones' },
+      { valor: '2', etiqueta: 'Apariciones' },
       { valor: '2019', etiqueta: 'Primera vez' },
     ],
   },
@@ -153,14 +153,14 @@ export const invitados: Record<string, InvitadoDeMaqueta> = {
       'Una de las voces más reconocibles del tango uruguayo. Grabó más de veinte ' +
         'discos, giró por Japón y España, y sigue cantando en salas de Montevideo ' +
         'y del interior.',
-      'Pasó siete veces por el estudio: la primera en 2012, hablando del centenario ' +
+      'Pasó cuatro veces por el estudio: la primera en 2012, hablando del centenario ' +
         'de un clásico; la última en 2026, para presentar disco nuevo y cantar en vivo.',
     ],
     datos: [
-      { valor: '7', etiqueta: 'Apariciones' },
+      { valor: '4', etiqueta: 'Apariciones' },
       { valor: '2012', etiqueta: 'Primera vez' },
-      { valor: '4', etiqueta: 'Temas en vivo' },
-      { valor: '3:41', etiqueta: 'Horas de aire' },
+      { valor: '2', etiqueta: 'Temas en vivo' },
+      { valor: '1:56', etiqueta: 'Horas de aire' },
     ],
     historicas: [
       {
@@ -176,27 +176,6 @@ export const invitados: Record<string, InvitadoDeMaqueta> = {
         tipo: 'Entrevista',
         tema: 'Música',
         duracion: '41:22',
-      },
-      {
-        fecha: '2021-06-21',
-        titulo: 'La noche del disco nuevo',
-        tipo: 'Entrevista',
-        tema: 'Música',
-        duracion: '29:47',
-      },
-      {
-        fecha: '2018-09-09',
-        titulo: 'Gira por Japón: crónica de vuelta',
-        tipo: 'Entrevista',
-        tema: 'Música',
-        duracion: '33:15',
-      },
-      {
-        fecha: '2015-05-17',
-        titulo: 'Tango y milonga, en vivo desde el piso',
-        tipo: 'Música en vivo',
-        tema: 'Música',
-        duracion: '22:38',
       },
       {
         fecha: '2012-10-02',
@@ -215,21 +194,42 @@ export const invitados: Record<string, InvitadoDeMaqueta> = {
   'luigi-mega': {
     rol: 'Los Iracundos',
     bio: [],
-    datos: [{ valor: '2', etiqueta: 'Apariciones' }],
+    datos: [{ valor: '1', etiqueta: 'Apariciones' }],
   },
   'anita-valiente': {
     rol: 'Cantante',
     bio: [],
-    datos: [{ valor: '3', etiqueta: 'Apariciones' }],
+    datos: [{ valor: '1', etiqueta: 'Apariciones' }],
   },
   'dito-galeano': {
-    rol: 'Música tropical',
+    rol: 'Música tropical · también como Fernando Dito Galeano',
     bio: [],
     datos: [{ valor: '4', etiqueta: 'Apariciones' }],
   },
 };
 
-/** Minutos al aire por año de un invitado (2c). Alturas del diseño, en %. */
-export const minutosPorAnio = [
-  26, 8, 8, 30, 8, 8, 44, 8, 8, 38, 8, 54, 8, 24, 8, 48,
-] as const;
+/**
+ * Minutos al aire por año de un invitado (2c), 2010–2026. Alturas en % y color
+ * del diseño: 'piso' es un año sin aparición.
+ */
+export const minutosPorAnio: readonly (readonly [
+  number,
+  'piso' | 'rojo' | 'vivo' | 'brasa',
+])[] = [
+  [26, 'piso'],
+  [8, 'piso'],
+  [34, 'rojo'],
+  [8, 'piso'],
+  [8, 'piso'],
+  [44, 'rojo'],
+  [8, 'piso'],
+  [8, 'piso'],
+  [8, 'piso'],
+  [8, 'piso'],
+  [8, 'piso'],
+  [8, 'piso'],
+  [68, 'vivo'],
+  [8, 'piso'],
+  [30, 'vivo'],
+  [60, 'brasa'],
+];
