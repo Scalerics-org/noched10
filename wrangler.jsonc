@@ -2,14 +2,16 @@
   // Worker de sólo assets: no hay código de servidor todavía.
   "name": "noched10",
   "compatibility_date": "2026-09-01",
-  // TODO: pegar el account_id de la cuenta de Scalerics antes del primer deploy.
+  // Cuenta de Scalerics, explícita a propósito.
   // Sin esta línea, si wrangler está logueado con una cuenta personal el sitio
   // del cliente queda fuera del control de la agencia.
-  "account_id": "<cuenta de Scalerics>",
+  "account_id": "79da115d272d36fd6ac8a5b08291642e",
   "assets": {
     "directory": "./dist",
     // Sin barra final: /programas sirve directo, sin el 307.
     "html_handling": "drop-trailing-slash",
+    // Las rutas que no existen sirven dist/404.html con status 404, no en blanco.
+    "not_found_handling": "404-page",
   },
   "observability": { "enabled": true },
 }
