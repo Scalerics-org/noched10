@@ -163,6 +163,7 @@ if (filtro.tema) {
           </div>
           {hoja.items.map((emision) => (
             <TarjetaEmision
+              slug={emision.slug}
               fecha={emision.fecha}
               titulo={emision.titulo}
               duracion={emision.duracion}

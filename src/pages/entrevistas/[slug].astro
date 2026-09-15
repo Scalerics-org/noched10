@@ -80,6 +80,7 @@ const base = Astro.site ?? new URL(sitio.url);
 const grafo = [
   video(
     {
+      slug: pieza.id,
       titulo: pieza.data.titulo,
       resumen: pieza.data.resumen,
       duracion: pieza.data.duracion,

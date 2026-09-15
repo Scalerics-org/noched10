@@ -89,6 +89,7 @@ export function serie(base: URL | string): Json[] {
 }
 
 type DatosDeEmision = {
+  slug: string;
   fecha: string;
   numero: number | null;
   titulo: string;
@@ -122,6 +123,7 @@ export function episodio(emision: DatosDeEmision, base: URL | string): Json {
 }
 
 type DatosDePieza = {
+  slug: string;
   titulo: string;
   resumen: string;
   duracion: string;
@@ -133,10 +135,10 @@ type DatosDePieza = {
 export function video(pieza: DatosDePieza, base: URL | string, portada: string): Json {
   return {
     '@type': 'VideoObject',
-    '@id': `${absoluta(urlDePieza(pieza.titulo), base)}#video`,
+    '@id': `${absoluta(urlDePieza(pieza.slug), base)}#video`,
     name: pieza.titulo,
     description: pieza.resumen,
-    url: absoluta(urlDePieza(pieza.titulo), base),
+    url: absoluta(urlDePieza(pieza.slug), base),
     // uploadDate es obligatorio para VideoObject. Usamos la fecha de emisión,
     // que es el dato real que tenemos.
     uploadDate: pieza.fecha,
@@ -166,7 +168,7 @@ type DatosDeInvitado = {
   slug: string;
   rol: string | null;
   bio: string | null;
-  apariciones: { titulo: string; fecha: string }[];
+  apariciones: { slug: string; titulo: string; fecha: string }[];
 };
 
 export function persona(invitado: DatosDeInvitado, base: URL | string): Json {
@@ -182,7 +184,7 @@ export function persona(invitado: DatosDeInvitado, base: URL | string): Json {
       '@type': 'TVEpisode',
       name: aparicion.titulo,
       datePublished: aparicion.fecha,
-      url: absoluta(urlDePieza(aparicion.titulo), base),
+      url: absoluta(urlDePieza(aparicion.slug), base),
       partOfSeries: { '@type': 'TVSeries', '@id': idDe.serie(base) },
     })),
     ...(ultima

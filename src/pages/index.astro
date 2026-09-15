@@ -101,6 +101,7 @@ const base = Astro.site ?? new URL(sitio.url);
 const grafo = [
   episodio(
     {
+      slug: ultima.data.slug,
       fecha: ultima.data.fecha,
       numero: ultima.data.numero,
       titulo: ultima.data.titulo,

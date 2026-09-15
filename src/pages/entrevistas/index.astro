@@ -37,10 +37,11 @@ const otras = piezas.filter((pieza) => pieza.data.tipo !== 'entrevista');
           entrevistas.map((pieza) => (
             <li class="relative">
               <TarjetaPieza
+                slug={pieza.id}
                 titulo={pieza.data.titulo}
                 tipo={pieza.data.tipo}
                 duracion={pieza.data.duracion}
-                fecha={pieza.data.emision.id}
+                fecha={pieza.data.fecha}
                 invitados={nombresDe(pieza.data.invitados)}
                 temas={pieza.data.temas}
               />
@@ -63,10 +64,11 @@ const otras = piezas.filter((pieza) => pieza.data.tipo !== 'entrevista');
             {otras.map((pieza) => (
               <li class="relative">
                 <TarjetaPieza
+                  slug={pieza.id}
                   titulo={pieza.data.titulo}
                   tipo={pieza.data.tipo}
                   duracion={pieza.data.duracion}
-                  fecha={pieza.data.emision.id}
+                  fecha={pieza.data.fecha}
                   invitados={nombresDe(pieza.data.invitados)}
                   temas={pieza.data.temas}
                 />

@@ -1,0 +1,72 @@
+# Trae los videos nuevos del canal de YouTube y, si hay novedades, commitea
+# src/datos/feed.json y publica el sitio en Cloudflare.
+#
+# Cuándo: el programa sale en vivo los jueves y se reestrena los martes. El
+# cron corre miércoles y viernes a las 12:00 UTC (09:00 de Montevideo): el
+# miércoles publica el estreno del martes con sus recortes, el viernes deja
+# registrado el vivo del jueves (que no se publica hasta tener estreno).
+#
+# Secretos del repo:
+# - YOUTUBE_API_KEY: clave de la YouTube Data API v3 (duraciones).
+# - CLOUDFLARE_API_TOKEN: lo usa desplegar.yml.
+#
+# Por qué el deploy se llama desde acá: un push hecho con GITHUB_TOKEN no
+# dispara otros workflows, así que el `on: push` de desplegar.yml no se entera
+# del commit del bot.
+name: Traer feed de YouTube
+
+on:
+  schedule:
+    - cron: '0 12 * * 3,5'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: traer-feed
+  cancel-in-progress: false
+
+jobs:
+  traer:
+    runs-on: ubuntu-latest
+    outputs:
+      hubo-cambios: ${{ steps.commit.outputs.hubo-cambios }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Traer el feed
+        run: npm run feed
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+
+      - name: Verificar que sigue compilando
+        run: npm run verify
+
+      - name: Commitear si hay videos nuevos
+        id: commit
+        run: |
+          if git diff --quiet src/datos/feed.json; then
+            echo "Nada nuevo en el canal."
+            echo "hubo-cambios=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/datos/feed.json
+          git commit -m "feat(feed): traer videos nuevos del canal"
+          git push
+          echo "hubo-cambios=true" >> "$GITHUB_OUTPUT"
+
+  desplegar:
+    needs: traer
+    if: needs.traer.outputs.hubo-cambios == 'true'
+    uses: ./.github/workflows/desplegar.yml
+    secrets: inherit

@@ -10,7 +10,13 @@
  * Con rutas reales el filtro funciona con JS apagado, se puede compartir, se
  * cachea y Google lo indexa, que es justo lo que no hace con query params.
  */
-import { anios, temasConPiezas, urlDelArchivo, type Filtro } from '../datos/archivo';
+import {
+  anios,
+  temasConPiezas,
+  urlDelArchivo,
+  urlDelChip,
+  type Filtro,
+} from '../datos/archivo';
 
 type Props = { filtro: Filtro };
 
@@ -28,7 +34,7 @@ const grupos = [
       ...anios.map((anio) => ({
         texto: String(anio),
         activo: filtro.anio === anio,
-        href: urlDelArchivo({ anio, tema: filtro.tema }),
+        href: urlDelChip({ anio }, filtro),
       })),
     ],
   },
@@ -43,7 +49,7 @@ const grupos = [
       ...temasConPiezas.map((tema) => ({
         texto: tema,
         activo: filtro.tema === tema,
-        href: urlDelArchivo({ anio: filtro.anio, tema }),
+        href: urlDelChip({ tema }, filtro),
       })),
     ],
   },

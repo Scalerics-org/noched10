@@ -26,7 +26,7 @@ import { formatearFecha } from '../../datos/texto';
 export const getStaticPaths = (async () => {
   const emisiones = await getCollection('emisiones');
   return emisiones.map((emision) => ({
-    params: { fecha: emision.data.fecha },
+    params: { fecha: emision.id },
     props: { id: emision.id },
   }));
 }) satisfies GetStaticPaths;
@@ -50,6 +50,7 @@ const grafo = [
   ...piezas.map((pieza) =>
     video(
       {
+        slug: pieza.id,
         titulo: pieza.data.titulo,
         resumen: pieza.data.resumen,
         duracion: pieza.data.duracion,
@@ -141,6 +142,7 @@ const grafo = [
           piezas.map((pieza) => (
             <li class="relative">
               <TarjetaPieza
+                slug={pieza.id}
                 titulo={pieza.data.titulo}
                 tipo={pieza.data.tipo}
                 duracion={pieza.data.duracion}

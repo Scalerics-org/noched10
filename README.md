@@ -22,7 +22,9 @@ transiciones de página con `@view-transition` nativo. Se despliega en Cloudflar
 ```bash
 npm install
 npm run dev        # http://localhost:4321
-npm run verify     # format:check + lint + astro check + build — lo mismo que corre CI
+npm run verify     # format:check + lint + astro check + test + build — lo mismo que corre CI
+npm test           # tests del dominio: parser de títulos y armado de emisiones
+npm run feed       # trae lo nuevo del canal de YouTube (necesita YOUTUBE_API_KEY)
 npm run build      # genera dist/ e indexa el buscador con Pagefind
 npm run preview    # sirve dist/ — es la única forma de probar el buscador
 npx wrangler deploy
@@ -39,7 +41,7 @@ vez de romperse.
 | Archivo                                                                            | Qué hace                                                                         |
 | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | `astro.config.ts`                                                                  | Config de Astro. Toma `site` de `src/datos/sitio.ts` para no repetir el dominio. |
-| `wrangler.jsonc`                                                                   | Deploy en Cloudflare. **Falta pegar el `account_id` de Scalerics.**              |
+| `wrangler.jsonc`                                                                   | Deploy en Cloudflare. Con el `account_id` de Scalerics fijado.                   |
 | `tsconfig.json`                                                                    | Extiende `astro/tsconfigs/strict`.                                               |
 | `package.json`                                                                     | Scripts. `verify` corre lo mismo que CI.                                         |
 | `.editorconfig`, `.gitattributes`, `.nvmrc`, `.prettierrc.json`, `.prettierignore` | Formato, fin de línea LF y versión de Node.                                      |
@@ -55,7 +57,9 @@ ni página decide nada por su cuenta.
 | ---------------- | -------------------------------------------------------------------------------- |
 | `sitio.ts`       | Nombre, dominio, descripción, navegación y redes.                                |
 | `programa.ts`    | Números del programa, plataformas de emisión, horario y alianzas.                |
-| `emisiones.ts`   | Las 8 emisiones de ejemplo con sus piezas. Dato crudo, nada derivado.            |
+| `feed.json`      | Los videos del canal ya clasificados. Lo escribe `npm run feed`: no se edita.    |
+| `curaduria.ts`   | Correcciones a mano sobre el feed: nombres, temas, fechas, reasignaciones.       |
+| `emisiones.ts`   | Emisiones y piezas armadas desde `feed.json` + `curaduria.ts`.                   |
 | `equipo.ts`      | Dirección, conducción, columnistas y conductores históricos.                     |
 | `invitados.ts`   | Índice de invitados derivado de las emisiones, más las fichas manuales.          |
 | `archivo.ts`     | Paginación, filtros, armado de URLs y qué rutas se pre-renderizan.               |
@@ -65,6 +69,27 @@ ni página decide nada por su cuenta.
 | `anunciantes.ts` | Formatos de pauta, argumentos de venta y campos del formulario.                  |
 | `contacto.ts`    | Datos de contacto y destino de los formularios.                                  |
 | `maqueta.ts`     | **Texto de ejemplo del diseño, NO es dato del cliente.** Nunca entra al JSON-LD. |
+
+### Actualización automática desde YouTube
+
+Canal `@produccionesD10` (`UCRIusH-9eFX3LztaqSRMtXQ`).
+
+| Pieza                              | Qué hace                                                                                |
+| ---------------------------------- | --------------------------------------------------------------------------------------- |
+| `src/dominio/feed.ts`              | Clasifica cada video por duración y saca del título invitados y fecha. Puro, con tests. |
+| `src/dominio/emisiones.ts`         | Une el doble pase, asigna recortes a emisiones y resuelve fechas repetidas. Con tests.  |
+| `herramientas/traer-feed.ts`       | Adaptador: RSS (últimos 15) + YouTube Data API (duraciones e histórico). Sólo agrega.   |
+| `.github/workflows/traer-feed.yml` | Miércoles y viernes 09:00 de Montevideo: trae, verifica, commitea y llama al deploy.    |
+| `.github/workflows/desplegar.yml`  | `wrangler deploy` con cada push a `main` o cuando lo llama el feed.                     |
+
+Secretos del repo: `YOUTUBE_API_KEY` (Data API v3, gratis, 10.000 unidades por día; una
+corrida usa 1 o 2) y `CLOUDFLARE_API_TOKEN` (Workers Scripts: Edit, cuenta Scalerics).
+
+Cada corrida lista lo que conviene mirar a mano y a qué constante de `curaduria.ts` va:
+programas con fecha deducida o repetida (`fechaPorVideo`), recortes sin emisión
+(`emisionPorVideo`) y nombres mal escritos (`nombres`). La carga única del histórico se
+hizo con `npm run feed -- --historico`: de 496 videos quedaron 228 emisiones y 161
+recortes; se descartaron 90 shorts y 13 programas de TODO D10.
 
 ### `src/content.config.ts`
 
@@ -160,7 +185,7 @@ Es un sitio estático: el build produce `dist/` y eso es todo lo que se sirve.
 2. Cuando esté el dominio, cambiar `url` en `src/datos/sitio.ts`. De ahí lo toman el
    canonical, el sitemap, el `robots.txt`, el RSS y el JSON-LD; no hay que tocar nada más.
 3. `npm run verify` — tiene que pasar limpio.
-4. `npx wrangler deploy`.
+4. `npx wrangler deploy`, o push a `main`: `desplegar.yml` lo hace solo.
 
 `wrangler.jsonc` sirve `dist/` con `html_handling: "drop-trailing-slash"`, que coincide
 con el `trailingSlash: 'never'` de `astro.config.ts`: `/programas` se sirve directo, sin
@@ -192,8 +217,9 @@ Todo esto está marcado en el código con `TODO: dato pendiente del cliente`.
 1. **Rol de la Dra. Andrea Ramírez Ponzo.** Aparece en el canal pero no sabemos en qué
    segmento. (La conducción —Yessy López, Charly Álvarez, Luis Orpi— quedó confirmada
    contra las descripciones del canal.)
-2. **Los `videoId` que faltan.** 13 cargados a mano del canal; las emisiones del 30/06 al
-   28/07 y la del 04/08 completa siguen sin video.
+2. **Qué es "TODO D10".** 13 programas de 2020 del mismo canal; quedan fuera del archivo
+   hasta saber si son Noche D10. También faltan los temas por invitado y las fechas reales
+   de los programas de 2022 subidos con atraso, que se cargan en `curaduria.ts`.
 3. **Horario de emisión.** El canal muestra vivo los jueves y estreno los martes, y una
    descripción dice 22:00, pero otras se contradicen. Va con `horarioConfirmado: false`
    y no se publica la hora.
