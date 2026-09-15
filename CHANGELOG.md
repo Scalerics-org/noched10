@@ -7,6 +7,10 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ### Agregado
 
+- Diseño de Claude Design implementado: sistema visual (Archivo, negro cálido, rojo D10,
+  brasa, amarillo y cian), cabezal con cuenta regresiva, home con hero "placa de aire",
+  archivo con índice y fichas de entrevista e invitado.
+- `src/datos/maqueta.ts` con el texto de ejemplo del diseño, fuera del JSON-LD.
 - Lint con ESLint (typescript-eslint + eslint-plugin-astro) dentro de `npm run verify`.
 
 - Andamiaje inicial: Astro 7 estático, Tailwind 4, TypeScript, sitemap.
